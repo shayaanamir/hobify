@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 
 import { store } from './store';
+import { BottomNav } from './components/BottomNav';
 
 // ── Screens ──────────────────────────────────────────────────────────────────
 import HomeScreen from './screens/HomeScreen';
@@ -73,9 +74,9 @@ function SocialStackNavigator() {
 function TabNavigator() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <BottomNav {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { display: 'none' }, // Custom tab bar will be built as a component
       }}
     >
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} />

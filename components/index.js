@@ -3,11 +3,7 @@
  *
  * Planned components (UI implementation coming later):
  *
- *   HobbyCard        — Hobby list row with color accent, streak badge, progress ring
- *   GoalCard         — Goal progress bar card
- *   SessionItem      — Session timeline item
  *   StatCard         — Single-stat tile (hours, sessions, streak)
- *   WeeklyChart      — 7-bar bar chart for weekly activity
  *   ProgressRing     — SVG circular progress indicator
  *   StreakBadge       — Flame badge showing current streak
  *   MediaLogItem     — Media collection row (title, rating, status)
@@ -16,5 +12,9 @@
  *   GuideCard        — Guide list card
  */
 
-// Re-export placeholder so importing this index doesn't error.
-export {};
+export { BottomNav } from './BottomNav';
+export { HobbyCard } from './HobbyCard';
+export { GoalCard } from './GoalCard';
+export { SessionItem } from './SessionItem';
+export { WeeklyChart } from './WeeklyChart';
+export { StatCard } from './StatCard';
