@@ -17,10 +17,9 @@ import AddScreen from './screens/AddScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import ProfileScreen from './screens/ProfileScreen';
 
-// Stack-only screens (pushed on top of tabs)
+// Stack-only screens
 import HobbiesListScreen from './screens/HobbiesListScreen';
 import HobbyDetailScreen from './screens/HobbyDetailScreen';
-import LogSessionScreen from './screens/LogSessionScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import CollectionScreen from './screens/CollectionScreen';
 import MediaDetailScreen from './screens/MediaDetailScreen';
@@ -28,23 +27,21 @@ import PostDetailScreen from './screens/PostDetailScreen';
 import GuidesScreen from './screens/GuidesScreen';
 import GuideDetailScreen from './screens/GuideDetailScreen';
 
+import LogSessionScreen from './screens/LogSessionScreen';
+
 // ── Navigators ────────────────────────────────────────────────────────────────
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const SocialStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
-/**
- * HomeStack: Home → Hobbies List → Hobby Detail → Log Session
- *                                              → Goals
- *                                              → Collection → Media Detail
- */
+
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
       <HomeStack.Screen name="HobbiesList" component={HobbiesListScreen} />
       <HomeStack.Screen name="HobbyDetail" component={HobbyDetailScreen} />
-      <HomeStack.Screen name="LogSession" component={LogSessionScreen} />
       <HomeStack.Screen name="Goals" component={GoalsScreen} />
       <HomeStack.Screen name="Collection" component={CollectionScreen} />
       <HomeStack.Screen name="MediaDetail" component={MediaDetailScreen} />
@@ -53,8 +50,7 @@ function HomeStackNavigator() {
 }
 
 /**
- * SocialStack: Social Feed → Post Detail
- *                          → Guides → Guide Detail
+ * SocialStack
  */
 function SocialStackNavigator() {
   return (
@@ -68,16 +64,13 @@ function SocialStackNavigator() {
 }
 
 /**
- * Root bottom-tab navigator.
- * The "Add" tab is a full-screen modal (no tab bar shown inside it).
+ * Bottom Tabs
  */
 function TabNavigator() {
   return (
     <Tab.Navigator
       tabBar={(props) => <BottomNav {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
       <Tab.Screen name="SocialTab" component={SocialStackNavigator} />
@@ -88,6 +81,24 @@ function TabNavigator() {
   );
 }
 
+
+function RootNavigator() {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+
+      <RootStack.Screen name="Tabs" component={TabNavigator} />
+
+      <RootStack.Screen
+        name="LogSession"
+        component={LogSessionScreen}
+        options={{
+          presentation: 'modal',
+        }}
+      />
+    </RootStack.Navigator>
+  );
+}
+
 // ── App Root ──────────────────────────────────────────────────────────────────
 export default function App() {
   return (
@@ -95,7 +106,7 @@ export default function App() {
       <Provider store={store}>
         <NavigationContainer>
           <StatusBar style="auto" />
-          <TabNavigator />
+          <RootNavigator />
         </NavigationContainer>
       </Provider>
     </GestureHandlerRootView>
