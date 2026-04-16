@@ -35,7 +35,9 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.statsGrid}>
         <StatCard icon={Clock} label="Today" value="1.5h" color="#3B82F6" bgColor="#EFF6FF" />
         <StatCard icon={Flame} label="Streak" value="12" color="#F97316" bgColor="#FFF7ED" />
-        <StatCard icon={Trophy} label="Goals" value="3/5" color="#A855F7" bgColor="#FAF5FF" />
+        <Pressable onPress={() => navigation.navigate('Goals')} style={{ flex: 1 }}>
+          <StatCard icon={Trophy} label="Goals" value="3/5" color="#A855F7" bgColor="#FAF5FF" />
+        </Pressable>
       </View>
 
       {/* Weekly Activity */}

@@ -1,20 +1,195 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { ArrowLeft, Clock, Heart } from 'lucide-react-native';
+import { useSelector } from 'react-redux';
 
-/**
- * GuideDetailScreen — Full guide reader.
- * Receives guideId via route params.
- * UI to be implemented.
- */
-export default function GuideDetailScreen() {
+function renderContent(content) {
+  return content.split('\n').map((line, i) => {
+    if (!line.trim()) {
+      return <View key={i} style={{ height: 10 }} />;
+    }
+    // Full-line bold header: **Header**
+    if (line.startsWith('**') && line.endsWith('**')) {
+      return (
+        <Text key={i} style={styles.contentHeading}>
+          {line.replace(/\*\*/g, '')}
+        </Text>
+      );
+    }
+    // Inline bold spans: mix of **bold** and normal
+    if (line.includes('**')) {
+      const parts = line.split(/\*\*(.*?)\*\*/);
+      return (
+        <Text key={i} style={styles.contentBody}>
+          {parts.map((part, j) =>
+            j % 2 === 1
+              ? <Text key={j} style={styles.contentBold}>{part}</Text>
+              : <Text key={j}>{part}</Text>
+          )}
+        </Text>
+      );
+    }
+    // Bullet / dash
+    if (line.startsWith('•') || line.startsWith('- ')) {
+      return <Text key={i} style={[styles.contentBody, styles.bullet]}>{line}</Text>;
+    }
+    // Numbered
+    if (/^\d+\./.test(line.trim())) {
+      return <Text key={i} style={[styles.contentBody, styles.bullet]}>{line}</Text>;
+    }
+    return <Text key={i} style={styles.contentBody}>{line}</Text>;
+  });
+}
+
+export default function GuideDetailScreen({ route, navigation }) {
+  const guideId = route?.params?.guideId;
+  const guides = useSelector((state) => state.guides.items);
+  const selectedGuideId = useSelector((state) => state.guides.selectedGuideId);
+  const hobbies = useSelector((state) => state.hobbies.items);
+
+  const guide = guides.find((g) => g.id === (guideId || selectedGuideId));
+  if (!guide) return null;
+
+  const hobby = guide.hobbyId ? hobbies.find((h) => h.id === guide.hobbyId) : null;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.placeholder}>GuideDetailScreen</Text>
+    <View style={styles.root}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Back */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <ArrowLeft size={20} color="#6B7280" />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+
+        {/* Hobby Tag */}
+        {hobby && (
+          <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15` }]}>
+            <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
+              {hobby.icon} {hobby.name}
+            </Text>
+          </View>
+        )}
+
+        {/* Title & Description */}
+        <Text style={styles.guideTitle}>{guide.title}</Text>
+        <Text style={styles.guideDescription}>{guide.description}</Text>
+
+        {/* Author & Meta */}
+        <View style={styles.metaRow}>
+          <View style={styles.authorRow}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarEmoji}>{guide.authorAvatar}</Text>
+            </View>
+            <Text style={styles.authorName}>{guide.authorName}</Text>
+          </View>
+          <View style={styles.metaStat}>
+            <Clock size={14} color="#9CA3AF" />
+            <Text style={styles.metaStatText}>{guide.readTime} min read</Text>
+          </View>
+          <View style={styles.metaStat}>
+            <Heart size={14} color="#9CA3AF" />
+            <Text style={styles.metaStatText}>{guide.likes}</Text>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Guide Content */}
+        <View style={styles.contentBlock}>
+          {renderContent(guide.content)}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAF8F5' },
-  placeholder: { fontSize: 18, color: '#9CA3AF' },
+  root: { flex: 1, backgroundColor: '#FAF8F5' },
+  scrollContent: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 24,
+    paddingHorizontal: 20,
+    paddingBottom: 80,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 20,
+  },
+  backText: { fontSize: 14, fontWeight: '500', color: '#6B7280' },
+  hobbyTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    marginBottom: 10,
+  },
+  hobbyTagText: { fontSize: 12, fontWeight: '600' },
+  guideTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+    lineHeight: 28,
+  },
+  guideDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarEmoji: { fontSize: 14 },
+  authorName: { fontSize: 14, fontWeight: '500', color: '#374151' },
+  metaStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaStatText: { fontSize: 12, color: '#9CA3AF' },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 20,
+  },
+  contentBlock: { gap: 2 },
+  contentHeading: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  contentBody: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 22,
+  },
+  contentBold: {
+    fontWeight: '600',
+    color: '#111827',
+  },
+  bullet: {
+    paddingLeft: 8,
+  },
 });

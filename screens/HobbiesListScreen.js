@@ -27,8 +27,8 @@ export default function HobbiesListScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -36,12 +36,6 @@ export default function HobbiesListScreen({ navigation }) {
           </TouchableOpacity>
           <Text style={styles.title}>Your Hobbies</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('AddTab')}
-          style={styles.addButton}
-        >
-          <Plus size={20} color="#FFFFFF" />
-        </TouchableOpacity>
       </View>
 
       {/* Search Filter */}
@@ -58,8 +52,8 @@ export default function HobbiesListScreen({ navigation }) {
 
       {/* Category List */}
       <View style={styles.categoriesWrapper}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesContainer}
         >
@@ -87,7 +81,7 @@ export default function HobbiesListScreen({ navigation }) {
       </View>
 
       {/* List */}
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       >

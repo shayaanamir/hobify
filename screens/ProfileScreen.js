@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 
 export default function ProfileScreen() {
   const hobbies = useSelector((state) => state.hobbies.items);
-  
+
   const totalHours = hobbies.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalSessions = hobbies.reduce((acc, curr) => acc + curr.totalSessions, 0);
 
@@ -27,8 +27,8 @@ export default function ProfileScreen() {
             <User size={40} color="#9CA3AF" />
           </View>
           <View>
-            <Text style={styles.userName}>Alex Johnson</Text>
-            <Text style={styles.userSince}>Hobbyist since 2023</Text>
+            <Text style={styles.userName}>Shayaan Amir</Text>
+            <Text style={styles.userSince}>Hobbyist since 2026</Text>
           </View>
         </View>
 
