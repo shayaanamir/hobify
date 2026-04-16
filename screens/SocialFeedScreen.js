@@ -1,20 +1,76 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useSelector } from 'react-redux';
+import { BookOpen } from 'lucide-react-native';
+import { PostCard } from '../components';
 
-/**
- * SocialFeedScreen — Community feed
- * Lists posts from community members; supports liking and navigating to details.
- * UI to be implemented.
- */
-export default function SocialFeedScreen() {
+export default function SocialFeedScreen({ navigation }) {
+  const posts = useSelector((state) => state.posts.items) || [];
+  
+  const sortedPosts = [...posts].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.placeholder}>SocialFeedScreen</Text>
+    <View style={styles.root}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Community</Text>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Guides')} 
+            style={styles.guidesBtn}
+          >
+            <BookOpen size={14} color="#FFFFFF" />
+            <Text style={styles.guidesBtnText}>Guides</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.feedContainer}>
+          {sortedPosts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAF8F5' },
-  placeholder: { fontSize: 18, color: '#9CA3AF' },
+  root: {
+    flex: 1,
+    backgroundColor: '#FAF8F5',
+  },
+  scrollContent: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 32,
+    paddingHorizontal: 20,
+    paddingBottom: 120, // tab bar spacing
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  guidesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111827',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    gap: 6,
+  },
+  guidesBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  feedContainer: {
+    gap: 0,
+  },
 });

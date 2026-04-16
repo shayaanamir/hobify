@@ -28,7 +28,7 @@ export default function HomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.dateText}>{today}</Text>
-        <Text style={styles.greeting}>Good morning, Alex</Text>
+        <Text style={styles.greeting}>Good morning, Shayaan</Text>
       </View>
 
       {/* Stats Grid */}
@@ -60,17 +60,17 @@ export default function HomeScreen({ navigation }) {
         </View>
         <View style={styles.hobbiesContainer}>
           {activeHobbies.map(hobby => (
-            <HobbyCard 
-              key={hobby.id} 
-              hobby={hobby} 
-              onPress={() => handleHobbyClick(hobby.id)} 
+            <HobbyCard
+              key={hobby.id}
+              hobby={hobby}
+              onPress={() => handleHobbyClick(hobby.id)}
             />
           ))}
         </View>
       </View>
 
       {/* Collection Quick Access */}
-      <Pressable 
+      <Pressable
         style={styles.collectionButton}
         onPress={() => navigation.navigate('Collection')}
       >

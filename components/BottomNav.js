@@ -5,7 +5,6 @@ import { Home, MessageCircle, Plus, CalendarDays, User } from 'lucide-react-nati
 const ICONS = {
   HomeTab: Home,
   SocialTab: MessageCircle,
-  AddTab: Plus,
   CalendarTab: CalendarDays,
   ProfileTab: User,
 };
@@ -13,7 +12,6 @@ const ICONS = {
 const LABELS = {
   HomeTab: 'Home',
   SocialTab: 'Social',
-  AddTab: 'Add',
   CalendarTab: 'Calendar',
   ProfileTab: 'Profile',
 };
@@ -25,7 +23,6 @@ export function BottomNav({ state, descriptors, navigation }) {
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-          const isFab = route.name === 'AddTab';
 
           const onPress = () => {
             const event = navigation.emit({
@@ -49,26 +46,7 @@ export function BottomNav({ state, descriptors, navigation }) {
           const IconComponent = ICONS[route.name] || Home;
           const label = LABELS[route.name] || route.name;
 
-          if (isFab) {
-            return (
-              <Pressable
-                key={route.key}
-                testID={options.tabBarTestID}
-                accessibilityRole="button"
-                accessibilityState={isFocused ? { selected: true } : {}}
-                accessibilityLabel={options.tabBarAccessibilityLabel}
-                onPress={onPress}
-                onLongPress={onLongPress}
-                style={styles.fabContainer}
-              >
-                <View style={styles.fabButton}>
-                  <IconComponent size={24} color="#FFF" strokeWidth={3} />
-                </View>
-              </Pressable>
-            );
-          }
-
-          return (
+          const tabUI = (
             <Pressable
               key={route.key}
               testID={options.tabBarTestID}
@@ -94,6 +72,25 @@ export function BottomNav({ state, descriptors, navigation }) {
               </Text>
             </Pressable>
           );
+
+          if (index === 1) {
+            return (
+              <React.Fragment key={route.key}>
+                {tabUI}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => navigation.navigate('Add')}
+                  style={styles.fabContainer}
+                >
+                  <View style={styles.fabButton}>
+                    <Plus size={24} color="#FFF" strokeWidth={3} />
+                  </View>
+                </Pressable>
+              </React.Fragment>
+            );
+          }
+
+          return tabUI;
         })}
       </View>
     </View>

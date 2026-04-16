@@ -19,3 +19,4 @@ export { SessionItem } from './SessionItem';
 export { WeeklyChart } from './WeeklyChart';
 export { StatCard } from './StatCard';
 export { MediaLogItem } from './MediaLogItem';
+export { PostCard } from './PostCard';

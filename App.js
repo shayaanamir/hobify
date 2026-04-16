@@ -35,7 +35,6 @@ const HomeStack = createNativeStackNavigator();
 const SocialStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
 
-
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
@@ -74,7 +73,6 @@ function TabNavigator() {
     >
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
       <Tab.Screen name="SocialTab" component={SocialStackNavigator} />
-      <Tab.Screen name="AddTab" component={AddScreen} />
       <Tab.Screen name="CalendarTab" component={CalendarScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>
@@ -87,6 +85,14 @@ function RootNavigator() {
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
 
       <RootStack.Screen name="Tabs" component={TabNavigator} />
+
+      <RootStack.Screen
+        name="Add"
+        component={AddScreen}
+        options={{
+          presentation: 'modal',
+        }}
+      />
 
       <RootStack.Screen
         name="LogSession"
