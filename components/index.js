@@ -18,3 +18,4 @@ export { GoalCard } from './GoalCard';
 export { SessionItem } from './SessionItem';
 export { WeeklyChart } from './WeeklyChart';
 export { StatCard } from './StatCard';
+export { MediaLogItem } from './MediaLogItem';
