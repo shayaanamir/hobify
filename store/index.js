@@ -6,9 +6,11 @@ import postsReducer from '../slices/postsSlice';
 import commentsReducer from '../slices/commentsSlice';
 import guidesReducer from '../slices/guidesSlice';
 import plannedActivitiesReducer from '../slices/plannedActivitiesSlice';
+import authReducer from '../slices/authSlice';
 
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     hobbies: hobbiesReducer,
     sessions: sessionsReducer,
     goals: goalsReducer,

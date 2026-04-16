@@ -1,5 +1,5 @@
 import React from 'react';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,99 +9,112 @@ import { StyleSheet } from 'react-native';
 
 import { store } from './store';
 import { BottomNav } from './components/BottomNav';
+import { selectIsLoggedIn } from './slices/authSlice';
 
-// ── Screens ──────────────────────────────────────────────────────────────────
-import HomeScreen from './screens/HomeScreen';
+// ── Screens ───────────────────────────────────────────────────────────────────
+import LoginScreen      from './screens/LoginScreen';
+import HomeScreen       from './screens/HomeScreen';
 import SocialFeedScreen from './screens/SocialFeedScreen';
-import AddScreen from './screens/AddScreen';
-import CalendarScreen from './screens/CalendarScreen';
-import ProfileScreen from './screens/ProfileScreen';
+import AddScreen        from './screens/AddScreen';
+import CalendarScreen   from './screens/CalendarScreen';
+import ProfileScreen    from './screens/ProfileScreen';
 
 // Stack-only screens
-import HobbiesListScreen from './screens/HobbiesListScreen';
-import HobbyDetailScreen from './screens/HobbyDetailScreen';
-import GoalsScreen from './screens/GoalsScreen';
-import CollectionScreen from './screens/CollectionScreen';
-import MediaDetailScreen from './screens/MediaDetailScreen';
-import PostDetailScreen from './screens/PostDetailScreen';
-import GuidesScreen from './screens/GuidesScreen';
-import GuideDetailScreen from './screens/GuideDetailScreen';
-
-import LogSessionScreen from './screens/LogSessionScreen';
+import HobbiesListScreen  from './screens/HobbiesListScreen';
+import HobbyDetailScreen  from './screens/HobbyDetailScreen';
+import GoalsScreen        from './screens/GoalsScreen';
+import CollectionScreen   from './screens/CollectionScreen';
+import MediaDetailScreen  from './screens/MediaDetailScreen';
+import PostDetailScreen   from './screens/PostDetailScreen';
+import GuidesScreen       from './screens/GuidesScreen';
+import GuideDetailScreen  from './screens/GuideDetailScreen';
+import LogSessionScreen   from './screens/LogSessionScreen';
 
 // ── Navigators ────────────────────────────────────────────────────────────────
-const Tab = createBottomTabNavigator();
-const HomeStack = createNativeStackNavigator();
+const Tab        = createBottomTabNavigator();
+const HomeStack  = createNativeStackNavigator();
 const SocialStack = createNativeStackNavigator();
-const RootStack = createNativeStackNavigator();
+const RootStack  = createNativeStackNavigator();
+const AuthStack  = createNativeStackNavigator();
 
+// ── Auth Navigator (unauthenticated) ──────────────────────────────────────────
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+// ── Home Stack ────────────────────────────────────────────────────────────────
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="HobbiesList" component={HobbiesListScreen} />
-      <HomeStack.Screen name="HobbyDetail" component={HobbyDetailScreen} />
-      <HomeStack.Screen name="Goals" component={GoalsScreen} />
-      <HomeStack.Screen name="Collection" component={CollectionScreen} />
-      <HomeStack.Screen name="MediaDetail" component={MediaDetailScreen} />
+      <HomeStack.Screen name="Home"         component={HomeScreen} />
+      <HomeStack.Screen name="HobbiesList"  component={HobbiesListScreen} />
+      <HomeStack.Screen name="HobbyDetail"  component={HobbyDetailScreen} />
+      <HomeStack.Screen name="Goals"        component={GoalsScreen} />
+      <HomeStack.Screen name="Collection"   component={CollectionScreen} />
+      <HomeStack.Screen name="MediaDetail"  component={MediaDetailScreen} />
     </HomeStack.Navigator>
   );
 }
 
-/**
- * SocialStack
- */
+// ── Social Stack ──────────────────────────────────────────────────────────────
 function SocialStackNavigator() {
   return (
     <SocialStack.Navigator screenOptions={{ headerShown: false }}>
-      <SocialStack.Screen name="SocialFeed" component={SocialFeedScreen} />
-      <SocialStack.Screen name="PostDetail" component={PostDetailScreen} />
-      <SocialStack.Screen name="Guides" component={GuidesScreen} />
-      <SocialStack.Screen name="GuideDetail" component={GuideDetailScreen} />
+      <SocialStack.Screen name="SocialFeed"   component={SocialFeedScreen} />
+      <SocialStack.Screen name="PostDetail"   component={PostDetailScreen} />
+      <SocialStack.Screen name="Guides"       component={GuidesScreen} />
+      <SocialStack.Screen name="GuideDetail"  component={GuideDetailScreen} />
     </SocialStack.Navigator>
   );
 }
 
-/**
- * Bottom Tabs
- */
+// ── Tab Navigator ─────────────────────────────────────────────────────────────
 function TabNavigator() {
   return (
     <Tab.Navigator
       tabBar={(props) => <BottomNav {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
-      <Tab.Screen name="SocialTab" component={SocialStackNavigator} />
+      <Tab.Screen name="HomeTab"     component={HomeStackNavigator} />
+      <Tab.Screen name="SocialTab"   component={SocialStackNavigator} />
       <Tab.Screen name="CalendarTab" component={CalendarScreen} />
-      <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+      <Tab.Screen name="ProfileTab"  component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
 
-
-function RootNavigator() {
+// ── Root Navigator (authenticated) ────────────────────────────────────────────
+function AppNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-
       <RootStack.Screen name="Tabs" component={TabNavigator} />
 
       <RootStack.Screen
         name="Add"
         component={AddScreen}
-        options={{
-          presentation: 'modal',
-        }}
+        options={{ presentation: 'modal' }}
       />
-
       <RootStack.Screen
         name="LogSession"
         component={LogSessionScreen}
-        options={{
-          presentation: 'modal',
-        }}
+        options={{ presentation: 'modal' }}
       />
     </RootStack.Navigator>
+  );
+}
+
+// ── Navigation root — reads Redux auth state ──────────────────────────────────
+function NavigationRoot() {
+  const isLoggedIn = useSelector(selectIsLoggedIn);
+  return (
+    <NavigationContainer>
+      <StatusBar style="auto" />
+      {isLoggedIn ? <AppNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
   );
 }
 
@@ -110,10 +123,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <Provider store={store}>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <RootNavigator />
-        </NavigationContainer>
+        <NavigationRoot />
       </Provider>
     </GestureHandlerRootView>
   );

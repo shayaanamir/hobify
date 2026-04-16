@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
-import { User, Settings, Bell, Download, Info, ChevronRight } from 'lucide-react-native';
-import { useSelector } from 'react-redux';
+import { User, Settings, Bell, Download, Info, ChevronRight, LogOut } from 'lucide-react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout, selectUser } from '../slices/authSlice';
 
 export default function ProfileScreen() {
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const hobbies = useSelector((state) => state.hobbies.items);
 
-  const totalHours = hobbies.reduce((acc, curr) => acc + curr.totalHours, 0);
+  const totalHours    = hobbies.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalSessions = hobbies.reduce((acc, curr) => acc + curr.totalSessions, 0);
 
   const SETTINGS_OPTS = [
-    { icon: Bell, label: 'Notifications' },
+    { icon: Bell,     label: 'Notifications' },
     { icon: Settings, label: 'General Settings' },
     { icon: Download, label: 'Export Data' },
-    { icon: Info, label: 'About Hobify' },
+    { icon: Info,     label: 'About Hobify' },
   ];
 
   return (
@@ -27,7 +30,7 @@ export default function ProfileScreen() {
             <User size={40} color="#9CA3AF" />
           </View>
           <View>
-            <Text style={styles.userName}>Shayaan Amir</Text>
+            <Text style={styles.userName}>{user?.name || 'Hobbyist'}</Text>
             <Text style={styles.userSince}>Hobbyist since 2026</Text>
           </View>
         </View>
@@ -71,6 +74,15 @@ export default function ProfileScreen() {
         <View style={styles.versionWrapper}>
           <Text style={styles.versionText}>Version 1.0.0</Text>
         </View>
+
+        <TouchableOpacity
+          onPress={() => dispatch(logout())}
+          style={styles.logoutBtn}
+          activeOpacity={0.8}
+        >
+          <LogOut size={16} color="#EF4444" />
+          <Text style={styles.logoutBtnText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -187,9 +199,26 @@ const styles = StyleSheet.create({
   versionWrapper: {
     marginTop: 32,
     alignItems: 'center',
+    marginBottom: 16,
   },
   versionText: {
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  logoutBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#EF4444',
   },
 });
