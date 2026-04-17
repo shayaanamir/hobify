@@ -93,20 +93,20 @@ export default function CalendarScreen() {
   const daySessions = sessions
     .filter((s) => isSameDay(new Date(s.date), selectedDate))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
   const dayPlanned = plannedActivities.filter((a) =>
     isSameDay(new Date(a.date), selectedDate)
   );
 
   const checkIsToday = (day) =>
     day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-  
+
   const checkIsSelected = (day) =>
     day === selectedDate.getDate() && viewMonth === selectedDate.getMonth() && viewYear === selectedDate.getFullYear();
 
   const handleSavePlan = () => {
     if (!planTitle.trim() || !planHobbyId) return;
-    
+
     // Generate date for selected day but roughly default time
     const targetDate = new Date(selectedDate);
     targetDate.setHours(today.getHours(), today.getMinutes());
@@ -156,7 +156,7 @@ export default function CalendarScreen() {
               <Text key={d} style={styles.weekDayText}>{d}</Text>
             ))}
           </View>
-          
+
           <View style={styles.daysGrid}>
             {calendarDays.map((day, i) => {
               if (day === null) {
@@ -180,8 +180,8 @@ export default function CalendarScreen() {
                 >
                   <View style={[styles.dayCircle, isToday && !isSelected && styles.dayCircleToday]}>
                     <Text style={[
-                      styles.dayText, 
-                      isToday && styles.dayTextToday, 
+                      styles.dayText,
+                      isToday && styles.dayTextToday,
                       isSelected && styles.dayTextSelected
                     ]}>
                       {day}
@@ -191,9 +191,9 @@ export default function CalendarScreen() {
                   {/* Dots */}
                   <View style={styles.dotsRow}>
                     {dayHobbyDots.slice(0, 3).map((dot, idx) => (
-                      <View 
-                        key={idx} 
-                        style={[styles.dot, { backgroundColor: dot.color }]} 
+                      <View
+                        key={idx}
+                        style={[styles.dot, { backgroundColor: dot.color }]}
                       />
                     ))}
                     {hasPlanned && dayHobbyDots.length === 0 && (
@@ -222,7 +222,7 @@ export default function CalendarScreen() {
                 </View>
               )}
               {!showPlanForm && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowPlanForm(true)}
                   style={styles.planBtn}
                 >
@@ -280,7 +280,7 @@ export default function CalendarScreen() {
 
               <Text style={styles.formLabel}>Duration</Text>
               <View style={styles.durationControl}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setPlanDuration(Math.max(5, planDuration - 15))}
                   style={styles.durBtn}
                 >
@@ -290,7 +290,7 @@ export default function CalendarScreen() {
                   <Text style={styles.durTextVal}>{planDuration}</Text>
                   <Text style={styles.durTextUnit}>min</Text>
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setPlanDuration(Math.min(480, planDuration + 15))}
                   style={styles.durBtn}
                 >
@@ -305,7 +305,7 @@ export default function CalendarScreen() {
                     style={[styles.durChip, planDuration === d ? styles.durChipSelected : null]}
                   >
                     <Text style={[styles.durChipText, planDuration === d ? styles.durChipTextSelected : null]}>
-                      {d >= 60 ? `${d/60}h` : `${d}m`}
+                      {d >= 60 ? `${d / 60}h` : `${d}m`}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -320,7 +320,7 @@ export default function CalendarScreen() {
                 placeholderTextColor="#9CA3AF"
               />
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleSavePlan}
                 disabled={!planTitle.trim() || !planHobbyId}
                 style={[
@@ -389,11 +389,11 @@ export default function CalendarScreen() {
                         {activity.completed && <Check size={14} color="#FFF" />}
                       </TouchableOpacity>
                       <View style={styles.plannedContent}>
-                        <Text 
+                        <Text
                           style={[
-                            styles.plannedTitle, 
+                            styles.plannedTitle,
                             activity.completed ? styles.plannedTitleComplete : null
-                          ]} 
+                          ]}
                           numberOfLines={1}
                         >
                           {activity.title}
@@ -430,7 +430,7 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FAF8F5' },
+  root: { flex: 1, backgroundColor: '#fff6e8ff' },
   scrollContent: {
     paddingTop: Platform.OS === 'ios' ? 60 : 32,
     paddingHorizontal: 20,

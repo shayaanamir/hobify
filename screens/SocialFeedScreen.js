@@ -6,8 +6,8 @@ import { PostCard } from '../components';
 
 export default function SocialFeedScreen({ navigation }) {
   const posts = useSelector((state) => state.posts.items) || [];
-  
-  const sortedPosts = [...posts].sort((a, b) => 
+
+  const sortedPosts = [...posts].sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -16,8 +16,8 @@ export default function SocialFeedScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Community</Text>
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('Guides')} 
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Guides')}
             style={styles.guidesBtn}
           >
             <BookOpen size={14} color="#FFFFFF" />
@@ -38,7 +38,7 @@ export default function SocialFeedScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#fff6e8ff',
   },
   scrollContent: {
     paddingTop: Platform.OS === 'ios' ? 60 : 32,

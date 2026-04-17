@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 64,
     paddingBottom: 120, // Accommodate the floating bottom nav
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#fff6e8ff',
   },
   header: {
     marginBottom: 24,

@@ -9,14 +9,14 @@ export default function ProfileScreen() {
   const user = useSelector(selectUser);
   const hobbies = useSelector((state) => state.hobbies.items);
 
-  const totalHours    = hobbies.reduce((acc, curr) => acc + curr.totalHours, 0);
+  const totalHours = hobbies.reduce((acc, curr) => acc + curr.totalHours, 0);
   const totalSessions = hobbies.reduce((acc, curr) => acc + curr.totalSessions, 0);
 
   const SETTINGS_OPTS = [
-    { icon: Bell,     label: 'Notifications' },
+    { icon: Bell, label: 'Notifications' },
     { icon: Settings, label: 'General Settings' },
     { icon: Download, label: 'Export Data' },
-    { icon: Info,     label: 'About Hobify' },
+    { icon: Info, label: 'About Hobify' },
   ];
 
   return (
@@ -89,7 +89,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FAF8F5' },
+  root: { flex: 1, backgroundColor: '#fff6e8ff' },
   scrollContent: {
     paddingTop: Platform.OS === 'ios' ? 60 : 32,
     paddingHorizontal: 24,

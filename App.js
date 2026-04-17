@@ -52,10 +52,8 @@ function HomeStackNavigator() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home"         component={HomeScreen} />
       <HomeStack.Screen name="HobbiesList"  component={HobbiesListScreen} />
-      <HomeStack.Screen name="HobbyDetail"  component={HobbyDetailScreen} />
       <HomeStack.Screen name="Goals"        component={GoalsScreen} />
       <HomeStack.Screen name="Collection"   component={CollectionScreen} />
-      <HomeStack.Screen name="MediaDetail"  component={MediaDetailScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -65,9 +63,7 @@ function SocialStackNavigator() {
   return (
     <SocialStack.Navigator screenOptions={{ headerShown: false }}>
       <SocialStack.Screen name="SocialFeed"   component={SocialFeedScreen} />
-      <SocialStack.Screen name="PostDetail"   component={PostDetailScreen} />
       <SocialStack.Screen name="Guides"       component={GuidesScreen} />
-      <SocialStack.Screen name="GuideDetail"  component={GuideDetailScreen} />
     </SocialStack.Navigator>
   );
 }
@@ -92,6 +88,12 @@ function AppNavigator() {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
       <RootStack.Screen name="Tabs" component={TabNavigator} />
+
+      {/* Detail screens (hides tab bar) */}
+      <RootStack.Screen name="HobbyDetail"  component={HobbyDetailScreen} />
+      <RootStack.Screen name="MediaDetail"  component={MediaDetailScreen} />
+      <RootStack.Screen name="PostDetail"   component={PostDetailScreen} />
+      <RootStack.Screen name="GuideDetail"  component={GuideDetailScreen} />
 
       <RootStack.Screen
         name="Add"
