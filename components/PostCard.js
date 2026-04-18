@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Heart, MessageCircle } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleLikePost } from '../slices/postsSlice';
+import { toggleLikePostAsync } from '../slices/postsSlice';
+import { selectUser } from '../slices/authSlice';
 import { useNavigation } from '@react-navigation/native';
 
 const TYPE_CONFIG = {
@@ -25,17 +26,19 @@ function timeAgo(dateStr) {
 export function PostCard({ post }) {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const hobbies = useSelector(state => state.hobbies.items);
   
   const hobby = post.hobbyId ? hobbies.find(h => h.id === post.hobbyId) : null;
   const typeConfig = TYPE_CONFIG[post.type] || TYPE_CONFIG.progress;
+  const isLikedByMe = post.likedBy?.includes(user?.uid) || false;
 
   const handleTap = () => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
   const handleLike = () => {
-    dispatch(toggleLikePost(post.id));
+    dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }));
   };
 
   return (
@@ -74,8 +77,8 @@ export function PostCard({ post }) {
 
       <View style={styles.footerRow}>
         <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
-          <Heart size={18} color={post.likedByMe ? '#EF4444' : '#9CA3AF'} fill={post.likedByMe ? '#EF4444' : 'transparent'} />
-          <Text style={[styles.actionText, post.likedByMe && styles.actionTextLiked]}>{post.likes}</Text>
+          <Heart size={18} color={isLikedByMe ? '#EF4444' : '#9CA3AF'} fill={isLikedByMe ? '#EF4444' : 'transparent'} />
+          <Text style={[styles.actionText, isLikedByMe && styles.actionTextLiked]}>{post.likes}</Text>
         </TouchableOpacity>
         <View style={styles.actionButton}>
           <MessageCircle size={18} color="#9CA3AF" />

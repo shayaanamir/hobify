@@ -1,11 +1,20 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { BookOpen } from 'lucide-react-native';
 import { PostCard } from '../components';
+import { fetchPosts, selectPostsStatus } from '../slices/postsSlice';
 
 export default function SocialFeedScreen({ navigation }) {
+  const dispatch = useDispatch();
   const posts = useSelector((state) => state.posts.items) || [];
+  const postsStatus = useSelector(selectPostsStatus);
+
+  useEffect(() => {
+    if (postsStatus === 'idle') {
+      dispatch(fetchPosts());
+    }
+  }, [postsStatus, dispatch]);
 
   const sortedPosts = [...posts].sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

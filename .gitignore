@@ -43,3 +43,4 @@ yarn-error.*
 /references
 PROJECT_CONTEXT.md
 UI_REFERENCE_CODE.md
+.env

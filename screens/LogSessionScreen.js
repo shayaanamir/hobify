@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { X, Check, Clock, Calendar as CalendarIcon, Star, BookOpen, Gamepad2, Clapperboard } from 'lucide-react-native';
-import { logSession } from '../slices/sessionsSlice';
+import { logSessionAsync } from '../slices/sessionsSlice';
+import { updateHobbyStatsAsync } from '../slices/hobbiesSlice';
+import { selectUser } from '../slices/authSlice';
 
 
 export default function LogSessionScreen({ route, navigation }) {
   const { hobbyId } = route.params || {};
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
 
   const hobby = useSelector((state) =>
     state.hobbies.items.find((h) => h.id === hobbyId)
@@ -27,7 +30,8 @@ export default function LogSessionScreen({ route, navigation }) {
   const isMediaHobby = hobby.type === 'media';
 
   const handleSave = () => {
-    dispatch(logSession({
+    if (!user) return;
+    const sessionData = {
       hobbyId: hobby.id,
       date: new Date(date).toISOString(),
       duration,
@@ -35,7 +39,9 @@ export default function LogSessionScreen({ route, navigation }) {
       mediaTitle: isMediaHobby && mediaTitle.trim() ? mediaTitle.trim() : undefined,
       rating: isMediaHobby ? rating : undefined,
       status: isMediaHobby ? status : undefined,
-    }));
+    };
+    dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
+    dispatch(updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby }));
     navigation.goBack();
   };
 

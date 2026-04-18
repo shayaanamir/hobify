@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { User, Settings, Bell, Download, Info, ChevronRight, LogOut } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout, selectUser } from '../slices/authSlice';
+import { signOutThunk, selectUser } from '../slices/authSlice';
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
         </View>
 
         <TouchableOpacity
-          onPress={() => dispatch(logout())}
+          onPress={() => dispatch(signOutThunk())}
           style={styles.logoutBtn}
           activeOpacity={0.8}
         >

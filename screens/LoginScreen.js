@@ -1,35 +1,47 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, Animated,
+  ActivityIndicator,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react-native';
-import { login } from '../slices/authSlice';
+import {
+  signUpUser,
+  signInUser,
+  clearAuthError,
+  selectAuthStatus,
+  selectAuthError,
+} from '../slices/authSlice';
 
 const HOBBY_PILLS = [
-  { label: '🎸 Guitar',   color: '#F97316' },
-  { label: '📚 Reading',  color: '#8B5CF6' },
-  { label: '🏃 Running',  color: '#10B981' },
+  { label: '🎸 Guitar', color: '#F97316' },
+  { label: '📚 Reading', color: '#8B5CF6' },
+  { label: '🏃 Running', color: '#10B981' },
   { label: '🎨 Painting', color: '#EC4899' },
-  { label: '🍳 Cooking',  color: '#F59E0B' },
-  { label: '🎮 Gaming',   color: '#3B82F6' },
+  { label: '🍳 Cooking', color: '#F59E0B' },
+  { label: '🎮 Gaming', color: '#3B82F6' },
 ];
 
 export default function LoginScreen() {
   const dispatch = useDispatch();
-  const [mode, setMode]             = useState('login'); // 'login' | 'signup'
-  const [name, setName]             = useState('');
-  const [email, setEmail]           = useState('');
-  const [password, setPassword]     = useState('');
+  const authStatus = useSelector(selectAuthStatus);
+  const authError = useSelector(selectAuthError);
+
+  const [mode, setMode] = useState('login');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors]         = useState({});
+  const [errors, setErrors] = useState({});
+
 
   const slideAnim = useRef(new Animated.Value(0)).current;
-
+  // Clear error when switching modes
   const switchMode = (newMode) => {
     setMode(newMode);
     setErrors({});
+    dispatch(clearAuthError());
     Animated.spring(slideAnim, {
       toValue: newMode === 'login' ? 0 : 1,
       useNativeDriver: false,
@@ -51,11 +63,15 @@ export default function LoginScreen() {
 
   const handleSubmit = () => {
     if (!validate()) return;
-    dispatch(login({
-      name: mode === 'signup' ? name.trim() : (email.split('@')[0]),
-      email: email.trim(),
-    }));
+    dispatch(clearAuthError());
+    if (mode === 'signup') {
+      dispatch(signUpUser({ email: email.trim(), password, name: name.trim() }));
+    } else {
+      dispatch(signInUser({ email: email.trim(), password }));
+    }
   };
+
+  const isLoading = authStatus === 'loading';
 
   const tabLeft = slideAnim.interpolate({
     inputRange: [0, 1],
@@ -159,29 +175,33 @@ export default function LoginScreen() {
               </TouchableOpacity>
             )}
 
+            {/* Firebase error */}
+            {authError ? (
+              <View style={styles.firebaseError}>
+                <Text style={styles.firebaseErrorText}>{authError}</Text>
+              </View>
+            ) : null}
+
             {/* Submit */}
-            <TouchableOpacity onPress={handleSubmit} style={styles.submitBtn} activeOpacity={0.88}>
-              <Text style={styles.submitBtnText}>
-                {mode === 'login' ? 'Log In' : 'Create Account'}
-              </Text>
-              <ArrowRight size={18} color="#FFF" />
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Guest */}
             <TouchableOpacity
-              onPress={() => dispatch(login({ name: 'Guest', email: 'guest@hobify.app' }))}
-              style={styles.guestBtn}
-              activeOpacity={0.8}
+              onPress={handleSubmit}
+              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              activeOpacity={0.88}
+              disabled={isLoading}
             >
-              <Text style={styles.guestBtnText}>Continue as Guest</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.submitBtnText}>
+                    {mode === 'login' ? 'Log In' : 'Create Account'}
+                  </Text>
+                  <ArrowRight size={18} color="#FFF" />
+                </>
+              )}
             </TouchableOpacity>
+
+
           </View>
         </View>
 
@@ -201,16 +221,13 @@ export default function LoginScreen() {
   );
 }
 
-const ACCENT = '#111827';   // dark
-const ACCENT2 = '#EC4899';  // pink
-const ACCENT3 = '#F97316';  // orange
+const ACCENT = '#111827';
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FAF8F5' },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 0 : 0,
     paddingBottom: 32,
   },
 
@@ -222,152 +239,79 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   appName: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#111827',
-    letterSpacing: -1,
-    marginBottom: 8,
+    fontSize: 42, fontWeight: '800', color: '#111827',
+    letterSpacing: -1, marginBottom: 8,
   },
   tagline: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    fontSize: 15, color: '#6B7280', textAlign: 'center',
+    lineHeight: 22, marginBottom: 24,
   },
-  pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 9999,
-    borderWidth: 1,
-  },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 9999, borderWidth: 1 },
   pillText: { fontSize: 12, fontWeight: '600' },
 
   // ── Card
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 6,
-    overflow: 'hidden',
-    marginBottom: 20,
-    marginHorizontal: 4,
+    backgroundColor: '#FFFFFF', borderRadius: 28,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 20, elevation: 6,
+    overflow: 'hidden', marginBottom: 20, marginHorizontal: 4,
   },
 
   // Tab
   tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    margin: 16,
-    borderRadius: 14,
-    height: 46,
-    position: 'relative',
+    flexDirection: 'row', backgroundColor: '#F3F4F6',
+    margin: 16, borderRadius: 14, height: 46, position: 'relative',
   },
   tabIndicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    width: '48%',
-    backgroundColor: ACCENT,
-    borderRadius: 10,
+    position: 'absolute', top: 4, bottom: 4, width: '48%',
+    backgroundColor: ACCENT, borderRadius: 10,
   },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
   tabText: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
   tabTextActive: { color: '#FFFFFF' },
 
   // Form
   form: { paddingHorizontal: 20, paddingBottom: 20 },
   fieldGroup: { marginBottom: 14 },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-  },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6 },
   input: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 13 : 11,
-    fontSize: 15,
-    color: '#111827',
+    backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderRadius: 12, paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 13 : 11, fontSize: 15, color: '#111827',
   },
   inputError: { borderColor: '#FCA5A5' },
   errorText: { fontSize: 11, color: '#EF4444', marginTop: 4, marginLeft: 2 },
   passwordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: Platform.OS === 'ios' ? 13 : 11,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB',
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: Platform.OS === 'ios' ? 13 : 11,
   },
   passwordInput: { flex: 1, fontSize: 15, color: '#111827', padding: 0 },
   forgotWrap: { alignItems: 'flex-end', marginBottom: 16, marginTop: -4 },
   forgotText: { fontSize: 12, fontWeight: '600', color: ACCENT },
 
+  // Firebase error
+  firebaseError: {
+    backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, marginBottom: 14,
+    borderWidth: 1, borderColor: '#FECACA',
+  },
+  firebaseErrorText: { fontSize: 13, color: '#DC2626', textAlign: 'center' },
+
   // Submit
   submitBtn: {
-    backgroundColor: ACCENT,
-    borderRadius: 14,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 20,
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 5,
+    backgroundColor: ACCENT, borderRadius: 14, paddingVertical: 15,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginBottom: 20, shadowColor: ACCENT,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25,
+    shadowRadius: 10, elevation: 5,
   },
+  submitBtnDisabled: { opacity: 0.7 },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
-  // Divider
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#F3F4F6' },
-  dividerText: { fontSize: 12, color: '#9CA3AF', fontWeight: '500' },
-
-  // Guest
-  guestBtn: {
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: 14,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
-  guestBtnText: { fontSize: 14, fontWeight: '600', color: '#374151' },
 
   // Bottom switch
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   switchText: { fontSize: 13, color: '#6B7280' },
   switchLink: { fontSize: 13, fontWeight: '700', color: ACCENT },
 });

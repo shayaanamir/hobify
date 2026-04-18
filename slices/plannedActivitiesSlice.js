@@ -1,105 +1,110 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import {
+  addDocument,
+  queryCollection,
+  updateDocument,
+  deleteDocument,
+} from '../services/firestoreService';
 
-// ─────────────────────────── MOCK DATA ────────────────────────────────────────
-const today = new Date();
+// ─────────────────────────── ASYNC THUNKS ─────────────────────────────────────
 
-const MOCK_PLANNED = [
-  {
-    id: 'pa1',
-    hobbyId: '1',
-    title: 'Guitar practice — barre chords',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString(),
-    duration: 45,
-    completed: false,
-  },
-  {
-    id: 'pa2',
-    hobbyId: '3',
-    title: 'Morning 5K run',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString(),
-    duration: 30,
-    completed: false,
-  },
-  {
-    id: 'pa3',
-    hobbyId: '2',
-    title: 'Read Project Hail Mary ch. 6-8',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2).toISOString(),
-    duration: 60,
-    completed: false,
-  },
-  {
-    id: 'pa4',
-    hobbyId: '5',
-    title: 'Try a new pasta recipe',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3).toISOString(),
-    duration: 90,
-    completed: false,
-  },
-  {
-    id: 'pa5',
-    hobbyId: '4',
-    title: 'Painting session — still life',
-    date: new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString(),
-    duration: 60,
-    completed: true,
-  },
-];
+export const fetchPlannedActivities = createAsyncThunk(
+  'plannedActivities/fetch',
+  async (userId, { rejectWithValue }) => {
+    try {
+      return await queryCollection('plannedActivities', [
+        { field: 'userId', op: '==', value: userId },
+      ]);
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const addPlannedActivityAsync = createAsyncThunk(
+  'plannedActivities/add',
+  async ({ userId, activity }, { rejectWithValue }) => {
+    try {
+      const data = { userId, completed: false, ...activity };
+      const id = await addDocument('plannedActivities', data);
+      return { id, ...data };
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const toggleCompleteAsync = createAsyncThunk(
+  'plannedActivities/toggleComplete',
+  async ({ activityId, completed }, { rejectWithValue }) => {
+    try {
+      await updateDocument('plannedActivities', activityId, {
+        completed: !completed,
+      });
+      return activityId;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const removePlannedActivityAsync = createAsyncThunk(
+  'plannedActivities/remove',
+  async (activityId, { rejectWithValue }) => {
+    try {
+      await deleteDocument('plannedActivities', activityId);
+      return activityId;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
 
 // ─────────────────────────── SLICE ────────────────────────────────────────────
 const plannedActivitiesSlice = createSlice({
   name: 'plannedActivities',
   initialState: {
-    items: MOCK_PLANNED,
+    items: [],
+    status: 'idle',
+    error: null,
   },
-  reducers: {
-    /**
-     * Add a new planned activity.
-     * Payload: { hobbyId, title, date, duration, notes? }
-     */
-    addPlannedActivity: (state, action) => {
-      const newActivity = {
-        id: `pa${Date.now()}`,
-        completed: false,
-        ...action.payload,
-      };
-      state.items.push(newActivity);
-    },
-
-    /**
-     * Toggle the completed state of a planned activity.
-     * Payload: id (string)
-     */
-    togglePlannedActivityComplete: (state, action) => {
-      const activity = state.items.find((a) => a.id === action.payload);
-      if (activity) {
-        activity.completed = !activity.completed;
-      }
-    },
-
-    /**
-     * Remove a planned activity.
-     * Payload: id (string)
-     */
-    removePlannedActivity: (state, action) => {
-      state.items = state.items.filter((a) => a.id !== action.payload);
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchPlannedActivities.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchPlannedActivities.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload;
+      })
+      .addCase(fetchPlannedActivities.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(addPlannedActivityAsync.fulfilled, (state, action) => {
+        state.items.push(action.payload);
+      })
+      .addCase(toggleCompleteAsync.fulfilled, (state, action) => {
+        const a = state.items.find((i) => i.id === action.payload);
+        if (a) a.completed = !a.completed;
+      })
+      .addCase(removePlannedActivityAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter((i) => i.id !== action.payload);
+      });
   },
 });
 
-export const {
-  addPlannedActivity,
-  togglePlannedActivityComplete,
-  removePlannedActivity,
-} = plannedActivitiesSlice.actions;
 export default plannedActivitiesSlice.reducer;
 
 // ─────────────────────────── SELECTORS ────────────────────────────────────────
-export const selectAllPlannedActivities = (state) => state.plannedActivities.items;
+export const selectAllPlannedActivities = (state) =>
+  state.plannedActivities.items;
 
 export const selectPlannedActivitiesByDate = (dateStr) => (state) =>
   state.plannedActivities.items.filter(
-    (a) => new Date(a.date).toDateString() === new Date(dateStr).toDateString()
+    (a) =>
+      new Date(a.date).toDateString() === new Date(dateStr).toDateString()
   );
 
 export const selectUpcomingActivities = (state) => {

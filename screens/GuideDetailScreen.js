@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Clock, Heart } from 'lucide-react-native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleLikeGuideAsync } from '../slices/guidesSlice';
+import { selectUser } from '../slices/authSlice';
 
 function renderContent(content) {
   return content.split('\n').map((line, i) => {
@@ -42,6 +44,8 @@ function renderContent(content) {
 }
 
 export default function GuideDetailScreen({ route, navigation }) {
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const guideId = route?.params?.guideId;
   const guides = useSelector((state) => state.guides.items);
   const selectedGuideId = useSelector((state) => state.guides.selectedGuideId);
@@ -50,7 +54,13 @@ export default function GuideDetailScreen({ route, navigation }) {
   const guide = guides.find((g) => g.id === (guideId || selectedGuideId));
   if (!guide) return null;
 
+  const isLikedByMe = guide.likedBy?.includes(user?.uid) || false;
   const hobby = guide.hobbyId ? hobbies.find((h) => h.id === guide.hobbyId) : null;
+
+  const handleLike = () => {
+    if (!user) return;
+    dispatch(toggleLikeGuideAsync({ guideId: guide.id, userId: user.uid, isCurrentlyLiked: isLikedByMe }));
+  };
 
   return (
     <View style={styles.root}>
@@ -86,10 +96,10 @@ export default function GuideDetailScreen({ route, navigation }) {
             <Clock size={14} color="#9CA3AF" />
             <Text style={styles.metaStatText}>{guide.readTime} min read</Text>
           </View>
-          <View style={styles.metaStat}>
-            <Heart size={14} color="#9CA3AF" />
-            <Text style={styles.metaStatText}>{guide.likes}</Text>
-          </View>
+          <TouchableOpacity onPress={handleLike} style={styles.metaStat}>
+            <Heart size={14} color={isLikedByMe ? '#EF4444' : '#9CA3AF'} fill={isLikedByMe ? '#EF4444' : 'transparent'} />
+            <Text style={[styles.metaStatText, isLikedByMe && { color: '#EF4444' }]}>{guide.likes}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Divider */}

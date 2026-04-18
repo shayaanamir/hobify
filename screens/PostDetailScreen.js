@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput, KeyboardAvoidingView, Image,
 } from 'react-native';
 import { ArrowLeft, Heart, MessageCircle, Send } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleLikePost, incrementCommentCount } from '../slices/postsSlice';
-import { addComment } from '../slices/commentsSlice';
+import { toggleLikePostAsync, incrementCommentCountAsync } from '../slices/postsSlice';
+import { addCommentAsync, fetchCommentsByPost } from '../slices/commentsSlice';
+import { selectUser } from '../slices/authSlice';
 import { CommentItem } from '../components/CommentItem';
 
 const TYPE_CONFIG = {
@@ -28,6 +29,7 @@ function timeAgo(dateStr) {
 export default function PostDetailScreen({ route, navigation }) {
   const dispatch = useDispatch();
   const [newComment, setNewComment] = useState('');
+  const user = useSelector(selectUser);
 
   const postId = route?.params?.postId;
   const posts = useSelector((state) => state.posts.items);
@@ -35,7 +37,15 @@ export default function PostDetailScreen({ route, navigation }) {
   const comments = useSelector((state) => state.comments.items);
   const hobbies = useSelector((state) => state.hobbies.items);
 
-  const post = posts.find((p) => p.id === (postId || selectedPostId));
+  const resolvedPostId = postId || selectedPostId;
+  const post = posts.find((p) => p.id === resolvedPostId);
+
+  useEffect(() => {
+    if (resolvedPostId) {
+      dispatch(fetchCommentsByPost(resolvedPostId));
+    }
+  }, [resolvedPostId, dispatch]);
+
   if (!post) return null;
 
   const hobby = post.hobbyId ? hobbies.find((h) => h.id === post.hobbyId) : null;
@@ -44,10 +54,12 @@ export default function PostDetailScreen({ route, navigation }) {
     .filter((c) => c.postId === post.id)
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
+  const isLikedByMe = post.likedBy?.includes(user?.uid) || false;
+
   const handleSend = () => {
-    if (!newComment.trim()) return;
-    dispatch(addComment({ postId: post.id, content: newComment.trim() }));
-    dispatch(incrementCommentCount(post.id));
+    if (!newComment.trim() || !user) return;
+    dispatch(addCommentAsync({ postId: post.id, content: newComment.trim(), user }));
+    dispatch(incrementCommentCountAsync({ postId: post.id, currentCount: post.commentCount || 0 }));
     setNewComment('');
   };
 
@@ -108,15 +120,15 @@ export default function PostDetailScreen({ route, navigation }) {
         {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
-            onPress={() => dispatch(toggleLikePost(post.id))}
+            onPress={() => dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }))}
             style={styles.actionBtn}
           >
             <Heart
               size={20}
-              color={post.likedByMe ? '#EF4444' : '#9CA3AF'}
-              fill={post.likedByMe ? '#EF4444' : 'none'}
+              color={isLikedByMe ? '#EF4444' : '#9CA3AF'}
+              fill={isLikedByMe ? '#EF4444' : 'none'}
             />
-            <Text style={[styles.actionCount, post.likedByMe && styles.likedCount]}>
+            <Text style={[styles.actionCount, isLikedByMe && styles.likedCount]}>
               {post.likes}
             </Text>
           </TouchableOpacity>

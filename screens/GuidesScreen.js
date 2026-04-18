@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput,
 } from 'react-native';
 import { ArrowLeft, Search } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectGuide } from '../slices/guidesSlice';
+import { selectGuide, fetchGuides, selectGuidesStatus } from '../slices/guidesSlice';
 import { GuideCard } from '../components/GuideCard';
 
 export default function GuidesScreen({ navigation }) {
   const dispatch = useDispatch();
   const guides = useSelector((state) => state.guides.items);
+  const guidesStatus = useSelector(selectGuidesStatus);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (guidesStatus === 'idle') {
+      dispatch(fetchGuides());
+    }
+  }, [guidesStatus, dispatch]);
 
   const filtered = guides.filter(
     (g) =>

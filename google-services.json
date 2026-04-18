@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "95398280124",
+    "project_id": "hobify-1bd80",
+    "storage_bucket": "hobify-1bd80.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95398280124:android:c98955919f580f010b49b9",
+        "android_client_info": {
+          "package_name": "com.shayaan.hobify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "95398280124-9r7g4bc5ct5k9e3p79rf6u3s8qnamkej.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdlbGspB9r3jm27bnDpKjC3TIfrW8A6ss"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "95398280124-9r7g4bc5ct5k9e3p79rf6u3s8qnamkej.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

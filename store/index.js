@@ -19,4 +19,8 @@ export const store = configureStore({
     guides: guidesReducer,
     plannedActivities: plannedActivitiesReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
 });

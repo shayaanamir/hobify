@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput,
@@ -6,7 +6,8 @@ import {
 import { Trophy, TrendingUp, Plus, X } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoalCard } from '../components';
-import { addGoal } from '../slices/goalsSlice';
+import { addGoalAsync, fetchGoals } from '../slices/goalsSlice';
+import { selectUser } from '../slices/authSlice';
 
 // ── Progress Ring ──────────────────────────────────────────────────────────────
 function ProgressRing({ progress, size = 100, color = '#10B981', trackColor = '#374151' }) {
@@ -47,8 +48,16 @@ const GOAL_TYPES = [
 // ── Screen ─────────────────────────────────────────────────────────────────────
 export default function GoalsScreen() {
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const goals  = useSelector((state) => state.goals.items);
   const hobbies = useSelector((state) => state.hobbies.items);
+  const goalsStatus = useSelector((state) => state.goals.status);
+
+  useEffect(() => {
+    if (user?.uid && goalsStatus === 'idle') {
+      dispatch(fetchGoals(user.uid));
+    }
+  }, [user?.uid, goalsStatus, dispatch]);
 
   const [showForm, setShowForm]       = useState(false);
   const [formHobbyId, setFormHobbyId] = useState('');
@@ -63,12 +72,15 @@ export default function GoalsScreen() {
   const canSave = formHobbyId && formTarget && Number(formTarget) > 0;
 
   const handleSave = () => {
-    if (!canSave) return;
-    dispatch(addGoal({
-      hobbyId: formHobbyId,
-      type:    formType,
-      target:  Number(formTarget),
-      unit:    selectedGoalType.unit,
+    if (!canSave || !user) return;
+    dispatch(addGoalAsync({
+      userId: user.uid,
+      goal: {
+        hobbyId: formHobbyId,
+        type:    formType,
+        target:  Number(formTarget),
+        unit:    selectedGoalType.unit,
+      },
     }));
     setShowForm(false);
     setFormHobbyId('');

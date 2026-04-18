@@ -1,17 +1,26 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { Clock, Flame, Trophy, ChevronRight, Library } from 'lucide-react-native';
 
 import { HobbyCard, WeeklyChart, StatCard } from '../components';
-import { selectAllHobbies } from '../slices/hobbiesSlice';
-// If today stats aren't complex, we use mock numbers for layout
-// In the future they will be calculated via selectors
+import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/hobbiesSlice';
+import { fetchSessions } from '../slices/sessionsSlice';
+import { selectUser } from '../slices/authSlice';
 
 export default function HomeScreen({ navigation }) {
-  // We use the Redux state to grab our hobbies
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const hobbies = useSelector(selectAllHobbies);
+  const hobbiesStatus = useSelector(selectHobbiesStatus);
   const activeHobbies = hobbies.slice(0, 4);
+
+  useEffect(() => {
+    if (user?.uid && hobbiesStatus === 'idle') {
+      dispatch(fetchHobbies(user.uid));
+      dispatch(fetchSessions(user.uid));
+    }
+  }, [user?.uid, hobbiesStatus, dispatch]);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -28,7 +37,7 @@ export default function HomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.dateText}>{today}</Text>
-        <Text style={styles.greeting}>Good morning, Shayaan</Text>
+        <Text style={styles.greeting}>Good morning, {user?.name || 'there'}</Text>
       </View>
 
       {/* Stats Grid */}

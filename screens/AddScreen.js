@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { X, Check } from 'lucide-react-native';
-import { addHobby } from '../slices/hobbiesSlice';
+import { addHobbyAsync } from '../slices/hobbiesSlice';
+import { selectUser } from '../slices/authSlice';
 
 const EMOJIS = ['🎸','📚','🏃','🎨','🍳','🎹','📷','🧶','🪴','🧘','🏊','🚴','✍️','🎭','🧩','🎤'];
 const COLORS = ['#F97066','#2DD4BF','#FBBF24','#A78BFA','#34D399','#60A5FA','#F472B6','#FB923C'];
@@ -13,23 +14,23 @@ const CATEGORIES = ['Creative','Sports','Music','Learning','Cooking','Other'];
  */
 export default function AddScreen({ navigation }) {
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Creative');
   const [icon, setIcon] = useState(EMOJIS[0]);
   const [color, setColor] = useState(COLORS[0]);
 
   const handleCreate = () => {
-    if (!name.trim()) return;
-    dispatch(addHobby({
-      id: `h${Date.now()}`,
-      type: 'activity', // default type; could be chosen if media mapping is required
-      name: name.trim(),
-      category,
-      icon,
-      color,
-      streak: 0,
-      totalHours: 0,
-      totalSessions: 0,
+    if (!name.trim() || !user) return;
+    dispatch(addHobbyAsync({
+      userId: user.uid,
+      hobby: {
+        type: 'activity',
+        name: name.trim(),
+        category,
+        icon,
+        color,
+      },
     }));
     navigation.goBack();
   };

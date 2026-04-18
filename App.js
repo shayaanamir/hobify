@@ -1,15 +1,22 @@
-import React from 'react';
-import { Provider, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { Provider, useSelector, useDispatch } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 
 import { store } from './store';
 import { BottomNav } from './components/BottomNav';
-import { selectIsLoggedIn } from './slices/authSlice';
+import {
+  selectIsLoggedIn,
+  selectIsRestoringSession,
+  restoreSession,
+  sessionExpired,
+  sessionCheckComplete,
+} from './slices/authSlice';
+import { subscribeToAuthState } from './services/authService';
 
 // ── Screens ───────────────────────────────────────────────────────────────────
 import LoginScreen      from './screens/LoginScreen';
@@ -109,9 +116,35 @@ function AppNavigator() {
   );
 }
 
+// ── Splash screen while checking auth ─────────────────────────────────────────
+function SplashScreen() {
+  return (
+    <View style={styles.splash}>
+      <Text style={styles.splashTitle}>Hobify</Text>
+      <ActivityIndicator size="large" color="#111827" style={{ marginTop: 16 }} />
+    </View>
+  );
+}
+
 // ── Navigation root — reads Redux auth state ──────────────────────────────────
 function NavigationRoot() {
+  const dispatch = useDispatch();
   const isLoggedIn = useSelector(selectIsLoggedIn);
+  const isRestoring = useSelector(selectIsRestoringSession);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthState((firebaseUser) => {
+      if (firebaseUser) {
+        dispatch(restoreSession(firebaseUser));
+      } else {
+        dispatch(sessionExpired());
+      }
+    });
+    return unsubscribe;
+  }, [dispatch]);
+
+  if (isRestoring) return <SplashScreen />;
+
   return (
     <NavigationContainer>
       <StatusBar style="auto" />
@@ -133,4 +166,16 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  splash: {
+    flex: 1,
+    backgroundColor: '#FAF8F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashTitle: {
+    fontSize: 42,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -1,
+  },
 });

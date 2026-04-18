@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput } from 'react-native';
 import { ChevronLeft, ChevronRight, Clock, Plus, Minus, X, Check } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { SessionItem } from '../components';
-import { addPlannedActivity, togglePlannedActivityComplete } from '../slices/plannedActivitiesSlice';
+import { addPlannedActivityAsync, toggleCompleteAsync, fetchPlannedActivities } from '../slices/plannedActivitiesSlice';
+import { selectUser } from '../slices/authSlice';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
@@ -21,9 +22,17 @@ function isSameDay(d1, d2) {
 
 export default function CalendarScreen() {
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
   const sessions = useSelector((state) => state.sessions.items);
   const hobbies = useSelector((state) => state.hobbies.items);
   const plannedActivities = useSelector((state) => state.plannedActivities.items);
+  const paStatus = useSelector((state) => state.plannedActivities.status);
+
+  useEffect(() => {
+    if (user?.uid && paStatus === 'idle') {
+      dispatch(fetchPlannedActivities(user.uid));
+    }
+  }, [user?.uid, paStatus, dispatch]);
 
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -111,12 +120,15 @@ export default function CalendarScreen() {
     const targetDate = new Date(selectedDate);
     targetDate.setHours(today.getHours(), today.getMinutes());
 
-    dispatch(addPlannedActivity({
-      hobbyId: planHobbyId,
-      title: planTitle.trim(),
-      date: targetDate.toISOString(),
-      duration: planDuration,
-      notes: planNotes.trim(),
+    dispatch(addPlannedActivityAsync({
+      userId: user.uid,
+      activity: {
+        hobbyId: planHobbyId,
+        title: planTitle.trim(),
+        date: targetDate.toISOString(),
+        duration: planDuration,
+        notes: planNotes.trim(),
+      },
     }));
 
     setShowPlanForm(false);
@@ -376,7 +388,7 @@ export default function CalendarScreen() {
                   return (
                     <View key={activity.id} style={styles.plannedCard}>
                       <TouchableOpacity
-                        onPress={() => dispatch(togglePlannedActivityComplete(activity.id))}
+                        onPress={() => dispatch(toggleCompleteAsync({ activityId: activity.id, completed: activity.completed }))}
                         style={[
                           styles.plannedCheckBtn,
                           {
