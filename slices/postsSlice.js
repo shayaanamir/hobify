@@ -5,8 +5,7 @@ import {
   getDocument,
   addDocument,
 } from '../services/firestoreService';
-import { arrayUnion, arrayRemove } from 'firebase/firestore';
-import { updateDocument as rawUpdate } from '../services/firestoreService';
+import { arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -59,15 +58,15 @@ export const toggleLikePostAsync = createAsyncThunk(
       if (isCurrentlyLiked) {
         await updateDoc(postRef, {
           likedBy: arrayRemove(userId),
-          likes: (await getDocument('posts', postId)).likes - 1,
+          likes: increment(-1),
         });
       } else {
         await updateDoc(postRef, {
           likedBy: arrayUnion(userId),
-          likes: (await getDocument('posts', postId)).likes + 1,
+          likes: increment(1),
         });
       }
-      return { postId, isCurrentlyLiked };
+      return { postId, userId, isCurrentlyLiked };
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -118,11 +117,17 @@ const postsSlice = createSlice({
         state.items.unshift(action.payload);
       })
       .addCase(toggleLikePostAsync.fulfilled, (state, action) => {
-        const { postId, isCurrentlyLiked } = action.payload;
+        const { postId, userId, isCurrentlyLiked } = action.payload;
         const post = state.items.find((p) => p.id === postId);
         if (post) {
-          post.likedByMe = !isCurrentlyLiked;
-          post.likes += isCurrentlyLiked ? -1 : 1;
+          if (!post.likedBy) post.likedBy = [];
+          if (isCurrentlyLiked) {
+            post.likedBy = post.likedBy.filter(id => id !== userId);
+            post.likes -= 1;
+          } else {
+            post.likedBy.push(userId);
+            post.likes += 1;
+          }
         }
       })
       .addCase(incrementCommentCountAsync.fulfilled, (state, action) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput, KeyboardAvoidingView, Image,
+  ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft, Heart, MessageCircle, Send } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -35,10 +36,21 @@ export default function PostDetailScreen({ route, navigation }) {
   const posts = useSelector((state) => state.posts.items);
   const selectedPostId = useSelector((state) => state.posts.selectedPostId);
   const comments = useSelector((state) => state.comments.items);
+  const commentsStatus = useSelector((state) => state.comments.status);
+  const commentsError = useSelector((state) => state.comments.error);
   const hobbies = useSelector((state) => state.hobbies.items);
 
   const resolvedPostId = postId || selectedPostId;
-  const post = posts.find((p) => p.id === resolvedPostId);
+  const post = posts.find((p) => String(p.id) === String(resolvedPostId));
+
+  // If we have comments in state, but the post itself is missing from the global list,
+  // we can still try to show comments if the postId matches.
+  const postComments = (comments || [])
+    .filter((c) => c && String(c.postId) === String(resolvedPostId))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  const hobby = post?.hobbyId ? hobbies.find((h) => h.id === post.hobbyId) : null;
+  const typeConfig = post ? (TYPE_CONFIG[post.type] || TYPE_CONFIG.progress) : TYPE_CONFIG.progress;
 
   useEffect(() => {
     if (resolvedPostId) {
@@ -48,11 +60,7 @@ export default function PostDetailScreen({ route, navigation }) {
 
   if (!post) return null;
 
-  const hobby = post.hobbyId ? hobbies.find((h) => h.id === post.hobbyId) : null;
-  const typeConfig = TYPE_CONFIG[post.type] || TYPE_CONFIG.progress;
-  const postComments = comments
-    .filter((c) => c.postId === post.id)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
 
   const isLikedByMe = post.likedBy?.includes(user?.uid) || false;
 
@@ -81,67 +89,87 @@ export default function PostDetailScreen({ route, navigation }) {
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
 
-        {/* Author row */}
-        <View style={styles.authorRow}>
-          <View style={[styles.avatar, { backgroundColor: hobby?.color ? `${hobby.color}20` : '#F3F4F6' }]}>
-            <Text style={styles.avatarEmoji}>{post.userAvatar}</Text>
-          </View>
-          <View style={styles.authorInfo}>
-            <Text style={styles.userName}>{post.userName}</Text>
-            <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>
-          </View>
-          <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
-            <Text style={[styles.typeBadgeText, { color: typeConfig.text }]}>
-              {typeConfig.emoji} {typeConfig.label}
-            </Text>
-          </View>
-        </View>
-
-        {/* Hobby tag */}
-        {hobby && (
-          <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15` }]}>
-            <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
-              {hobby.icon} {hobby.name}
-            </Text>
-          </View>
-        )}
-
         {/* Post content */}
-        <Text style={styles.postTitle}>{post.title}</Text>
-        <Text style={styles.postContent}>{post.content}</Text>
+        {post ? (
+          <>
+            {/* Author row */}
+            <View style={styles.authorRow}>
+              <View style={[styles.avatar, { backgroundColor: hobby?.color ? `${hobby.color}20` : '#F3F4F6' }]}>
+                <Text style={styles.avatarEmoji}>{post.userAvatar}</Text>
+              </View>
+              <View style={styles.authorInfo}>
+                <Text style={styles.userName}>{post.userName}</Text>
+                <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>
+              </View>
+              <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
+                <Text style={[styles.typeBadgeText, { color: typeConfig.text }]}>
+                  {typeConfig.emoji} {typeConfig.label}
+                </Text>
+              </View>
+            </View>
 
-        {/* Image */}
-        {post.image && (
-          <View style={styles.imageWrapper}>
-            <Image source={{ uri: post.image }} style={styles.image} resizeMode="cover" />
+            {/* Hobby tag */}
+            {hobby && (
+              <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15` }]}>
+                <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
+                  {hobby.icon} {hobby.name}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.postTitle}>{post.title}</Text>
+            <Text style={styles.postContent}>{post.content}</Text>
+
+            {/* Image */}
+            {post.image && (
+              <View style={styles.imageWrapper}>
+                <Image source={{ uri: post.image }} style={styles.image} resizeMode="cover" />
+              </View>
+            )}
+          </>
+        ) : (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator color="#111827" />
+            <Text style={{ marginTop: 12, color: '#6B7280' }}>Loading post details...</Text>
           </View>
         )}
 
         {/* Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            onPress={() => dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }))}
-            style={styles.actionBtn}
-          >
-            <Heart
-              size={20}
-              color={isLikedByMe ? '#EF4444' : '#9CA3AF'}
-              fill={isLikedByMe ? '#EF4444' : 'none'}
-            />
-            <Text style={[styles.actionCount, isLikedByMe && styles.likedCount]}>
-              {post.likes}
-            </Text>
-          </TouchableOpacity>
-          <View style={styles.actionBtn}>
-            <MessageCircle size={20} color="#9CA3AF" />
-            <Text style={styles.actionCount}>{post.commentCount}</Text>
+        {post && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              onPress={() => dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }))}
+              style={styles.actionBtn}
+            >
+              <Heart
+                size={20}
+                color={isLikedByMe ? '#EF4444' : '#9CA3AF'}
+                fill={isLikedByMe ? '#EF4444' : 'none'}
+              />
+              <Text style={[styles.actionCount, isLikedByMe && styles.likedCount]}>
+                {post.likes}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.actionBtn}>
+              <MessageCircle size={20} color="#9CA3AF" />
+              <Text style={styles.actionCount}>{post.commentCount}</Text>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Comments */}
         <Text style={styles.commentsHeader}>Comments</Text>
         <View style={styles.commentsList}>
-          {postComments.length > 0 ? (
+          {commentsStatus === 'loading' ? (
+            <ActivityIndicator size="small" color="#111827" style={{ marginVertical: 20 }} />
+          ) : commentsStatus === 'failed' ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>Error loading comments: {commentsError}</Text>
+              <TouchableOpacity onPress={() => dispatch(fetchCommentsByPost(resolvedPostId))}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : postComments.length > 0 ? (
             postComments.map((comment) => (
               <CommentItem key={comment.id} comment={comment} />
             ))
@@ -152,25 +180,27 @@ export default function PostDetailScreen({ route, navigation }) {
       </ScrollView>
 
       {/* Comment Input */}
-      <View style={styles.inputBar}>
-        <View style={styles.inputAvatar}>
-          <Text style={{ fontSize: 14 }}>😊</Text>
+      {post && (
+        <View style={styles.inputBar}>
+          <View style={styles.inputAvatar}>
+            <Text style={{ fontSize: 14 }}>😊</Text>
+          </View>
+          <View style={styles.inputWrap}>
+            <TextInput
+              style={styles.input}
+              value={newComment}
+              onChangeText={setNewComment}
+              placeholder="Add a comment..."
+              placeholderTextColor="#9CA3AF"
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+            />
+            <TouchableOpacity onPress={handleSend}>
+              <Send size={18} color={newComment.trim() ? '#111827' : '#D1D5DB'} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.inputWrap}>
-          <TextInput
-            style={styles.input}
-            value={newComment}
-            onChangeText={setNewComment}
-            placeholder="Add a comment..."
-            placeholderTextColor="#9CA3AF"
-            returnKeyType="send"
-            onSubmitEditing={handleSend}
-          />
-          <TouchableOpacity onPress={handleSend}>
-            <Send size={18} color={newComment.trim() ? '#111827' : '#D1D5DB'} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -307,5 +337,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#111827',
     padding: 0,
+  },
+  errorContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  retryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    textDecorationLine: 'underline',
   },
 });

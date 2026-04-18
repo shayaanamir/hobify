@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { queryCollection, getDocument } from '../services/firestoreService';
-import { arrayUnion, arrayRemove, doc, updateDoc } from 'firebase/firestore';
+import { arrayUnion, arrayRemove, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 // ─────────────────────────── ASYNC THUNKS ─────────────────────────────────────
@@ -24,19 +24,18 @@ export const toggleLikeGuideAsync = createAsyncThunk(
   async ({ guideId, userId, isCurrentlyLiked }, { rejectWithValue }) => {
     try {
       const guideRef = doc(db, 'guides', guideId);
-      const current = await getDocument('guides', guideId);
       if (isCurrentlyLiked) {
         await updateDoc(guideRef, {
           likedBy: arrayRemove(userId),
-          likes: (current.likes || 1) - 1,
+          likes: increment(-1),
         });
       } else {
         await updateDoc(guideRef, {
           likedBy: arrayUnion(userId),
-          likes: (current.likes || 0) + 1,
+          likes: increment(1),
         });
       }
-      return { guideId, isCurrentlyLiked };
+      return { guideId, userId, isCurrentlyLiked };
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -71,11 +70,17 @@ const guidesSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(toggleLikeGuideAsync.fulfilled, (state, action) => {
-        const { guideId, isCurrentlyLiked } = action.payload;
+        const { guideId, userId, isCurrentlyLiked } = action.payload;
         const guide = state.items.find((g) => g.id === guideId);
         if (guide) {
-          guide.likedByMe = !isCurrentlyLiked;
-          guide.likes += isCurrentlyLiked ? -1 : 1;
+          if (!guide.likedBy) guide.likedBy = [];
+          if (isCurrentlyLiked) {
+            guide.likedBy = guide.likedBy.filter(id => id !== userId);
+            guide.likes = (guide.likes || 1) - 1;
+          } else {
+            guide.likedBy.push(userId);
+            guide.likes = (guide.likes || 0) + 1;
+          }
         }
       });
   },

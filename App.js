@@ -36,6 +36,7 @@ import PostDetailScreen   from './screens/PostDetailScreen';
 import GuidesScreen       from './screens/GuidesScreen';
 import GuideDetailScreen  from './screens/GuideDetailScreen';
 import LogSessionScreen   from './screens/LogSessionScreen';
+import CreatePostScreen  from './screens/CreatePostScreen';
 
 // ── Navigators ────────────────────────────────────────────────────────────────
 const Tab        = createBottomTabNavigator();
@@ -110,6 +111,11 @@ function AppNavigator() {
       <RootStack.Screen
         name="LogSession"
         component={LogSessionScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <RootStack.Screen
+        name="CreatePost"
+        component={CreatePostScreen}
         options={{ presentation: 'modal' }}
       />
     </RootStack.Navigator>

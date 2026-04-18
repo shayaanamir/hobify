@@ -13,8 +13,7 @@ export const fetchCommentsByPost = createAsyncThunk(
     try {
       return await queryCollection(
         'comments',
-        [{ field: 'postId', op: '==', value: postId }],
-        { field: 'createdAt', direction: 'asc' }
+        [{ field: 'postId', op: '==', value: postId }]
       );
     } catch (err) {
       return rejectWithValue(err.message);
@@ -56,6 +55,7 @@ const commentsSlice = createSlice({
     builder
       .addCase(fetchCommentsByPost.pending, (state) => {
         state.status = 'loading';
+        state.items = []; // Clear current list while loading new post's comments
       })
       .addCase(fetchCommentsByPost.fulfilled, (state, action) => {
         state.status = 'succeeded';
