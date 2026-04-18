@@ -3,6 +3,7 @@ import {
   queryCollection,
   updateDocument,
   getDocument,
+  addDocument,
 } from '../services/firestoreService';
 import { arrayUnion, arrayRemove } from 'firebase/firestore';
 import { updateDocument as rawUpdate } from '../services/firestoreService';
@@ -17,6 +18,29 @@ export const fetchPosts = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await queryCollection('posts', [], { field: 'createdAt', direction: 'desc' });
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+/** Add a new post */
+export const addPostAsync = createAsyncThunk(
+  'posts/addPostAsync',
+  async ({ userId, userName, userAvatar, post }, { rejectWithValue }) => {
+    try {
+      const newPost = {
+        ...post,
+        userId,
+        userName,
+        userAvatar,
+        likes: 0,
+        likedBy: [],
+        commentCount: 0,
+        createdAt: new Date().toISOString(),
+      };
+      const addedId = await addDocument('posts', newPost);
+      return { id: addedId, ...newPost };
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -89,6 +113,9 @@ const postsSlice = createSlice({
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+      })
+      .addCase(addPostAsync.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
       })
       .addCase(toggleLikePostAsync.fulfilled, (state, action) => {
         const { postId, isCurrentlyLiked } = action.payload;
