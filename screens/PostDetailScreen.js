@@ -13,9 +13,9 @@ import { CommentItem } from '../components/CommentItem';
 
 const TYPE_CONFIG = {
   achievement: { label: 'Achievement', emoji: '🏆', bg: '#FEF3C7', text: '#92400E' },
-  progress:    { label: 'Progress',    emoji: '📈', bg: '#DBEAFE', text: '#1E40AF' },
-  milestone:   { label: 'Milestone',   emoji: '🎯', bg: '#F3E8FF', text: '#6B21A8' },
-  question:    { label: 'Question',    emoji: '❓', bg: '#FEE2E2', text: '#991B1B' },
+  progress: { label: 'Progress', emoji: '📈', bg: '#DBEAFE', text: '#1E40AF' },
+  milestone: { label: 'Milestone', emoji: '🎯', bg: '#F3E8FF', text: '#6B21A8' },
+  question: { label: 'Question', emoji: '❓', bg: '#FEE2E2', text: '#991B1B' },
 };
 
 function timeAgo(dateStr) {
@@ -75,7 +75,7 @@ export default function PostDetailScreen({ route, navigation }) {
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <ScrollView
         style={{ flex: 1 }}
@@ -154,6 +154,27 @@ export default function PostDetailScreen({ route, navigation }) {
               <MessageCircle size={20} color="#9CA3AF" />
               <Text style={styles.actionCount}>{post.commentCount}</Text>
             </View>
+          </View>)}
+        {/* Comment Input */}
+        {post && (
+          <View style={styles.inputBar}>
+            <View style={styles.inputAvatar}>
+              <Text style={{ fontSize: 14 }}>😊</Text>
+            </View>
+            <View style={styles.inputWrap}>
+              <TextInput
+                style={styles.input}
+                value={newComment}
+                onChangeText={setNewComment}
+                placeholder="Add a comment..."
+                placeholderTextColor="#9CA3AF"
+                returnKeyType="send"
+                onSubmitEditing={handleSend}
+              />
+              <TouchableOpacity onPress={handleSend}>
+                <Send size={18} color={newComment.trim() ? '#111827' : '#D1D5DB'} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -179,28 +200,6 @@ export default function PostDetailScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
-      {/* Comment Input */}
-      {post && (
-        <View style={styles.inputBar}>
-          <View style={styles.inputAvatar}>
-            <Text style={{ fontSize: 14 }}>😊</Text>
-          </View>
-          <View style={styles.inputWrap}>
-            <TextInput
-              style={styles.input}
-              value={newComment}
-              onChangeText={setNewComment}
-              placeholder="Add a comment..."
-              placeholderTextColor="#9CA3AF"
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
-            />
-            <TouchableOpacity onPress={handleSend}>
-              <Send size={18} color={newComment.trim() ? '#111827' : '#D1D5DB'} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
@@ -210,7 +209,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: Platform.OS === 'ios' ? 60 : 24,
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   backBtn: {
     flexDirection: 'row',
@@ -302,17 +301,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: 'transparent',
+    marginBottom: 20,
   },
   inputAvatar: {
     width: 32,
