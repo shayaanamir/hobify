@@ -34,29 +34,43 @@ export default function LogSessionScreen({ route, navigation }) {
 
   const isMediaHobby = hobby.type === 'media';
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
+
     const sessionData = {
       hobbyId: hobby.id,
       date: new Date(date).toISOString(),
       duration,
-      notes: notes.trim() || undefined,
-      mediaTitle: isMediaHobby && mediaTitle.trim() ? mediaTitle.trim() : undefined,
-      rating: isMediaHobby ? rating : undefined,
-      status: isMediaHobby ? status : undefined,
     };
-    dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
-    dispatch(updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby }));
+    if (notes.trim()) sessionData.notes = notes.trim();
+    if (isMediaHobby) {
+      if (mediaTitle.trim()) sessionData.mediaTitle = mediaTitle.trim();
+      if (rating !== undefined) sessionData.rating = rating;
+      if (status) sessionData.status = status;
+    }
+
+    // Await so that the Redux state (including the updated streak) reflects
+    // the new lastSessionDate before we read it for goal progress below.
+    await dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
+    const statsResult = await dispatch(
+      updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby })
+    );
+
+    // The slice returns the computed updates (including the real new streak).
+    const updatedStreak = statsResult?.payload?.updates?.streak ?? hobby.streak;
 
     goals.forEach((goal) => {
       let newCurrent = goal.current || 0;
+
       if (goal.type === 'weekly_hours') {
         newCurrent += duration / 60;
         newCurrent = Math.round(newCurrent * 10) / 10;
       } else if (goal.type === 'sessions_per_week') {
         newCurrent += 1;
       } else if (goal.type === 'streak_days') {
-        newCurrent = (hobby.streak || 0) + 1;
+        // Use the streak value that the slice actually computed — don't
+        // re-derive it here, since same-day sessions must not bump the count.
+        newCurrent = updatedStreak;
       }
 
       if (newCurrent !== goal.current) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { ChevronRight, Clock } from 'lucide-react-native';
+import { ChevronRight, Clock, Flame } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 // ─── Mini circular progress ring ─────────────────────────────────────────────
@@ -91,7 +91,7 @@ export function HobbyCard({ hobby, onPress, compact = false, goalProgress = null
         <View style={styles.rightSection}>
           {hobby.streak > 0 && (
             <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🔥 {hobby.streak}</Text>
+              <Text style={styles.streakText}><Flame size={15} fill="#EA580C" color="#EA580C" /> {hobby.streak}</Text>
             </View>
           )}
 
@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+
   },
   streakText: {
     fontSize: 12,
