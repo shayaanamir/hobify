@@ -5,6 +5,7 @@ import { X, Check, Clock, Calendar as CalendarIcon, Star, BookOpen, Gamepad2, Cl
 import { logSessionAsync } from '../slices/sessionsSlice';
 import { updateHobbyStatsAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
+import { updateGoalProgressAsync } from '../slices/goalsSlice';
 
 
 export default function LogSessionScreen({ route, navigation }) {
@@ -14,6 +15,10 @@ export default function LogSessionScreen({ route, navigation }) {
 
   const hobby = useSelector((state) =>
     state.hobbies.items.find((h) => h.id === hobbyId)
+  );
+
+  const goals = useSelector((state) =>
+    state.goals.items.filter((g) => g.hobbyId === hobbyId)
   );
 
   const [duration, setDuration] = useState(30);
@@ -42,6 +47,23 @@ export default function LogSessionScreen({ route, navigation }) {
     };
     dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
     dispatch(updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby }));
+
+    goals.forEach((goal) => {
+      let newCurrent = goal.current || 0;
+      if (goal.type === 'weekly_hours') {
+        newCurrent += duration / 60;
+        newCurrent = Math.round(newCurrent * 10) / 10;
+      } else if (goal.type === 'sessions_per_week') {
+        newCurrent += 1;
+      } else if (goal.type === 'streak_days') {
+        newCurrent = (hobby.streak || 0) + 1;
+      }
+
+      if (newCurrent !== goal.current) {
+        dispatch(updateGoalProgressAsync({ goalId: goal.id, current: newCurrent }));
+      }
+    });
+
     navigation.goBack();
   };
 
