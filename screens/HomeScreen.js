@@ -8,6 +8,7 @@ import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/h
 import { fetchSessions, selectAllSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
 import { selectUser } from '../slices/authSlice';
+import { getWeeklyData } from '../utils/statsHelper';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,19 +33,6 @@ function getGoalsSummary(goals = []) {
   return { done, total };
 }
 
-/** Build weekly activity data (hours per day, last 7 days oldest→newest) */
-function getWeeklyData(sessions = []) {
-  const days = Array(7).fill(0);
-  const now = new Date();
-  sessions.forEach((s) => {
-    if (!s.date) return;
-    const diff = Math.floor((now - new Date(s.date)) / (1000 * 60 * 60 * 24));
-    if (diff >= 0 && diff < 7) {
-      days[6 - diff] += (s.duration || 0) / 60;
-    }
-  });
-  return days.map((h) => +h.toFixed(2));
-}
 
 /** Weekly goal progress (0–100) for a hobby, based on its goals */
 export function getWeeklyGoalProgress(hobby, goals = [], sessions = []) {

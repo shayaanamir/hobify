@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { ArrowLeft, Play, Calendar, Clock, Award, BookOpen } from 'lucide-react-native';
 
 import { GoalCard, SessionItem, WeeklyChart, MediaLogItem } from '../components';
+import { getWeeklyData } from '../utils/statsHelper';
 
 export default function HobbyDetailScreen({ route, navigation }) {
   const { hobbyId } = route.params || {};
@@ -20,6 +21,8 @@ export default function HobbyDetailScreen({ route, navigation }) {
   const goals = useSelector((state) =>
     state.goals.items.filter((g) => g.hobbyId === hobbyId)
   );
+  
+  const weeklyData = useMemo(() => getWeeklyData(sessions), [sessions]);
 
   // Aggregate media items for "My Collection"
   const mediaItems = useMemo(() => {
@@ -178,7 +181,7 @@ export default function HobbyDetailScreen({ route, navigation }) {
             </View>
             <View style={styles.chartCard}>
               {/* Using static mock data directly as per UI_REFERENCE */}
-              <WeeklyChart data={[0.5, 1, 0, 2, 1.5, 0, 0]} color={hobby.color} height={100} />
+              <WeeklyChart data={weeklyData} color={hobby.color} height={100} />
             </View>
           </View>
 
