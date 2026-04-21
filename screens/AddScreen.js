@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { X, Check } from 'lucide-react-native';
+import { X, Check, Zap, Clapperboard } from 'lucide-react-native';
 import { addHobbyAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
 
-const EMOJIS = ['🎸','📚','🏃','🎨','🍳','🎹','📷','🧶','🪴','🧘','🏊','🚴','✍️','🎭','🧩','🎤'];
-const COLORS = ['#F97066','#2DD4BF','#FBBF24','#A78BFA','#34D399','#60A5FA','#F472B6','#FB923C'];
-const CATEGORIES = ['Creative','Sports','Music','Learning','Cooking','Other'];
+const EMOJIS = ['🎸', '📚', '🏃', '🎨', '🍳', '🎹', '📷', '🧶', '🪴', '🧘', '🏊', '🚴', '✍️', '🎭', '🧩', '🎤'];
+const COLORS = ['#F97066', '#2DD4BF', '#FBBF24', '#A78BFA', '#34D399', '#60A5FA', '#F472B6', '#FB923C'];
+const CATEGORIES = ['Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Entertainment', 'Other'];
+
+const TYPE_OPTIONS = [
+  {
+    value: 'activity',
+    label: 'Activity',
+    icon: Zap,
+    description: 'Track time & sessions for things you practice or do regularly.',
+  },
+  {
+    value: 'media',
+    label: 'Media',
+    icon: Clapperboard,
+    description: 'Log books, shows, films or games — track titles, ratings & progress.',
+  },
+];
 
 /**
  * AddScreen — Full-screen modal for creating hobbies.
@@ -16,6 +31,7 @@ export default function AddScreen({ navigation }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const [name, setName] = useState('');
+  const [type, setType] = useState('activity');
   const [category, setCategory] = useState('Creative');
   const [icon, setIcon] = useState(EMOJIS[0]);
   const [color, setColor] = useState(COLORS[0]);
@@ -25,7 +41,7 @@ export default function AddScreen({ navigation }) {
     dispatch(addHobbyAsync({
       userId: user.uid,
       hobby: {
-        type: 'activity',
+        type,
         name: name.trim(),
         category,
         icon,
@@ -65,6 +81,36 @@ export default function AddScreen({ navigation }) {
             placeholderTextColor="#9CA3AF"
             autoFocus
           />
+        </View>
+
+        {/* Type */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Type</Text>
+          <View style={styles.typeRow}>
+            {TYPE_OPTIONS.map((opt) => {
+              const selected = type === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  onPress={() => setType(opt.value)}
+                  style={[styles.typeCard, selected && styles.typeCardSelected]}
+                >
+                  <View style={styles.typeCardTop}>
+                    <opt.icon size={16} color={selected ? '#111827' : '#9CA3AF'} />
+                    <Text style={[styles.typeLabel, selected && styles.typeLabelSelected]}>
+                      {opt.label}
+                    </Text>
+                    <View style={[styles.typeRadio, selected && styles.typeRadioSelected]}>
+                      {selected && <View style={styles.typeRadioDot} />}
+                    </View>
+                  </View>
+                  <Text style={[styles.typeDescription, selected && styles.typeDescriptionSelected]}>
+                    {opt.description}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* Category */}
@@ -207,6 +253,63 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  typeCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  typeCardSelected: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#111827',
+  },
+  typeCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 6,
+  },
+  typeLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  typeLabelSelected: {
+    color: '#111827',
+  },
+  typeRadio: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeRadioSelected: {
+    borderColor: '#111827',
+  },
+  typeRadioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#111827',
+  },
+  typeDescription: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    lineHeight: 16,
+  },
+  typeDescriptionSelected: {
+    color: '#4B5563',
   },
   chipRow: {
     flexDirection: 'row',
