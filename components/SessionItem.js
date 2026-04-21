@@ -11,13 +11,6 @@ export function SessionItem({ session, color = '#3B82F6' }) {
     ? 'Today'
     : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  const formatDuration = (minutes) => {
-    if (minutes < 60) return `${minutes} min`;
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.dateCol}>
@@ -57,10 +50,10 @@ export function SessionItem({ session, color = '#3B82F6' }) {
         <View style={styles.timeRow}>
           <View style={styles.duration}>
             <Clock size={14} color="#9CA3AF" />
-            <Text style={styles.durationText}>{formatDuration(session.duration)}</Text>
+            <Text style={styles.durationText}>{session.duration} min</Text>
           </View>
           <Text style={styles.timeText}>
-            {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(session.createdAt || session.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
 
