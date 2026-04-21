@@ -4,7 +4,8 @@ import {
   Platform, TextInput, KeyboardAvoidingView
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { X, Check } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { addPostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
 
@@ -103,15 +104,17 @@ export default function CreatePostScreen({ navigation }) {
             {hobbies.map(hobby => (
               <TouchableOpacity
                 key={hobby.id}
-                style={[
-                  styles.hobbyPill,
-                  postHobbyId === hobby.id && { backgroundColor: hobby.color, borderColor: hobby.color }
-                ]}
                 onPress={() => setPostHobbyId(hobby.id)}
               >
-                <Text style={[styles.hobbyPillText, postHobbyId === hobby.id && { color: '#FFFFFF' }]}>
-                  {hobby.icon} {hobby.name}
-                </Text>
+                <View style={[
+                  styles.hobbyPill,
+                  postHobbyId === hobby.id && { backgroundColor: `${hobby.color}15`, borderColor: hobby.color, flexDirection: 'row', alignItems: 'center', gap: 4 }
+                ]}>
+                  {postHobbyId === hobby.id && <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />}
+                  <Text style={[styles.hobbyPillText, postHobbyId === hobby.id && { color: hobby.color, fontWeight: '700' }]}>
+                    {hobby.name}
+                  </Text>
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>

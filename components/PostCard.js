@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
 import { useNavigation } from '@react-navigation/native';
+import { IconRenderer } from './IconRenderer';
 
 const TYPE_CONFIG = {
   achievement: { label: 'Achievement', emoji: '🏆', bg: '#FEF3C7', text: '#92400E' },
@@ -59,9 +60,10 @@ export function PostCard({ post }) {
       </View>
 
       {hobby && (
-        <View style={[styles.hobbyPill, { backgroundColor: `${hobby.color}15` }]}>
+        <View style={[styles.hobbyPill, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+          <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
           <Text style={[styles.hobbyPillText, { color: hobby.color }]}>
-            {hobby.icon} {hobby.name}
+            {hobby.name}
           </Text>
         </View>
       )}

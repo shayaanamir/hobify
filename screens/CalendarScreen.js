@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput } from 'react-native';
 import { ChevronLeft, ChevronRight, Clock, Plus, Minus, X, Check } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { SessionItem } from '../components';
+import { SessionItem, IconRenderer } from '../components';
 import { addPlannedActivityAsync, toggleCompleteAsync, fetchPlannedActivities } from '../slices/plannedActivitiesSlice';
 import { selectUser } from '../slices/authSlice';
 
@@ -272,7 +272,7 @@ export default function CalendarScreen() {
                         }
                       ]}
                     >
-                      <Text style={{ fontSize: 12 }}>{hobby.icon}</Text>
+                      <IconRenderer iconName={hobby.icon} size={12} color={isSelected ? hobby.color : '#9CA3AF'} />
                       <Text style={[styles.hobbyChipText, { color: isSelected ? hobby.color : '#6B7280' }]}>
                         {hobby.name}
                       </Text>
@@ -356,7 +356,7 @@ export default function CalendarScreen() {
                   return (
                     <View key={session.id} style={styles.completedCard}>
                       <View style={[styles.completedIconWrap, { backgroundColor: `${hobby.color}15` }]}>
-                        <Text style={styles.completedIcon}>{hobby.icon}</Text>
+                        <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />
                       </View>
                       <View style={styles.completedContent}>
                         <Text style={styles.completedTitle} numberOfLines={1}>
@@ -410,12 +410,13 @@ export default function CalendarScreen() {
                         >
                           {activity.title}
                         </Text>
-                        <View style={styles.plannedMetaWrap}>
-                          <Text style={[styles.plannedHobby, { color: hobby.color }]}>
-                            {hobby.icon} {hobby.name}
-                          </Text>
-                          <Text style={styles.plannedMetaDuration}> · {activity.duration}m</Text>
-                        </View>
+                          <View style={styles.plannedMetaWrap}>
+                            <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
+                            <Text style={[styles.plannedHobby, { color: hobby.color, marginLeft: 4 }]}>
+                              {hobby.name}
+                            </Text>
+                            <Text style={styles.plannedMetaDuration}> · {activity.duration}m</Text>
+                          </View>
                       </View>
                     </View>
                   );
@@ -726,7 +727,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  completedIcon: { fontSize: 14 },
   completedContent: { flex: 1 },
   completedTitle: {
     fontSize: 14,

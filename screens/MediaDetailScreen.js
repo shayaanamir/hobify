@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Star, Clock, CheckCircle2 } from 'lucide-react-native';
-import { SessionItem } from '../components';
+import { SessionItem, IconRenderer } from '../components';
 
 export default function MediaDetailScreen({ route, navigation }) {
   const { mediaTitle, hobbyId } = route.params || {};
@@ -47,8 +47,8 @@ export default function MediaDetailScreen({ route, navigation }) {
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <View style={[styles.hobbyIconWrapper, { backgroundColor: hobby.color }]}>
-              <Text style={styles.hobbyIconText}>{hobby.icon}</Text>
+            <View style={[styles.hobbyIconWrapper, { backgroundColor: `${hobby.color}20` }]}>
+              <IconRenderer iconName={hobby.icon} size={32} color={hobby.color} />
             </View>
 
             <Text style={styles.titleText}>{mediaTitle}</Text>
@@ -168,9 +168,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
-  },
-  hobbyIconText: {
-    fontSize: 40,
   },
   titleText: {
     fontSize: 24,

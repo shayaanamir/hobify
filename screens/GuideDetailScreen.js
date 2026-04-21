@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Clock, Heart } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikeGuideAsync } from '../slices/guidesSlice';
 import { selectUser } from '../slices/authSlice';
@@ -73,9 +74,10 @@ export default function GuideDetailScreen({ route, navigation }) {
 
         {/* Hobby Tag */}
         {hobby && (
-          <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15` }]}>
+          <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+            <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
             <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
-              {hobby.icon} {hobby.name}
+              {hobby.name}
             </Text>
           </View>
         )}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { X, Check, Clock, Calendar as CalendarIcon, Star, BookOpen, Gamepad2, Clapperboard } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { logSessionAsync } from '../slices/sessionsSlice';
 import { updateHobbyStatsAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
@@ -116,8 +117,8 @@ export default function LogSessionScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hobby Indicator */}
         <View style={styles.hobbyIndicator}>
-          <View style={styles.hobbyIconWrapper}>
-            <Text style={styles.hobbyIconText}>{hobby.icon}</Text>
+          <View style={[styles.hobbyIconWrapper, { backgroundColor: `${hobby.color}20` }]}>
+            <IconRenderer iconName={hobby.icon} size={24} color={hobby.color} />
           </View>
           <View>
             <Text style={styles.hobbyLabel}>HOBBY</Text>
@@ -303,9 +304,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-  },
-  hobbyIconText: {
-    fontSize: 20,
   },
   hobbyLabel: {
     fontSize: 10,

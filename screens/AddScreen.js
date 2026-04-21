@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { X, Check, Zap, Clapperboard } from 'lucide-react-native';
 import { addHobbyAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
+import { HOBBY_ICONS, IconRenderer } from '../components';
 
-const EMOJIS = ['🎸', '📚', '🏃', '🎨', '🍳', '🎹', '📷', '🧶', '🪴', '🧘', '🏊', '🚴', '✍️', '🎭', '🧩', '🎤'];
 const COLORS = ['#F97066', '#2DD4BF', '#FBBF24', '#A78BFA', '#34D399', '#60A5FA', '#F472B6', '#FB923C'];
 const CATEGORIES = ['Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Entertainment', 'Other'];
 
@@ -33,7 +33,7 @@ export default function AddScreen({ navigation }) {
   const [name, setName] = useState('');
   const [type, setType] = useState('activity');
   const [category, setCategory] = useState('Creative');
-  const [icon, setIcon] = useState(EMOJIS[0]);
+  const [icon, setIcon] = useState(HOBBY_ICONS[0].icon);
   const [color, setColor] = useState(COLORS[0]);
 
   const handleCreate = () => {
@@ -66,7 +66,7 @@ export default function AddScreen({ navigation }) {
         {/* Preview */}
         <View style={styles.previewContainer}>
           <View style={[styles.previewIconWrapper, { backgroundColor: color }]}>
-            <Text style={styles.previewIconText}>{icon}</Text>
+            <IconRenderer iconName={icon} size={48} color="#FFFFFF" />
           </View>
         </View>
 
@@ -153,13 +153,13 @@ export default function AddScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.label}>Icon</Text>
           <View style={styles.emojiGrid}>
-            {EMOJIS.map((e) => (
+            {HOBBY_ICONS.map((item) => (
               <TouchableOpacity
-                key={e}
-                onPress={() => setIcon(e)}
-                style={[styles.emojiButton, icon === e && styles.emojiButtonSelected]}
+                key={item.icon}
+                onPress={() => setIcon(item.icon)}
+                style={[styles.emojiButton, icon === item.icon && styles.emojiButtonSelected]}
               >
-                <Text style={styles.emojiText}>{e}</Text>
+                <IconRenderer iconName={item.icon} size={24} color={icon === item.icon ? '#111827' : '#9CA3AF'} />
               </TouchableOpacity>
             ))}
           </View>
@@ -231,9 +231,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
-  },
-  previewIconText: {
-    fontSize: 48,
   },
   section: {
     marginBottom: 32,
@@ -365,9 +362,6 @@ const styles = StyleSheet.create({
   },
   emojiButtonSelected: {
     backgroundColor: '#E5E7EB',
-  },
-  emojiText: {
-    fontSize: 20,
   },
   footer: {
     padding: 24,

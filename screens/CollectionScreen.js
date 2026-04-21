@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, Platform } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { Library, Search } from 'lucide-react-native';
+import { Search, ChevronRight, Library, Star, Clock } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { MediaLogItem } from '../components';
 import { selectMedia } from '../slices/sessionsSlice';
 
@@ -100,7 +101,10 @@ export default function CollectionScreen({ navigation }) {
               <View key={group.hobby.id} style={styles.groupContainer}>
                 <View style={styles.groupHeader}>
                   <Text style={styles.groupHeaderText}>
-                    {group.hobby.icon} {group.hobby.name}
+                    <IconRenderer iconName={group.hobby.icon} size={14} color={group.hobby.color} />
+                    <Text style={[styles.hobbyPillText, { color: group.hobby.color }]}>
+                      {group.hobby.name}
+                    </Text>
                   </Text>
                 </View>
                 {group.items.map((item) => (

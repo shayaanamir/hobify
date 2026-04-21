@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Play, Calendar, Clock, Award, BookOpen } from 'lucide-react-native';
 
-import { GoalCard, SessionItem, WeeklyChart, MediaLogItem } from '../components';
+import { GoalCard, SessionItem, WeeklyChart, MediaLogItem, IconRenderer } from '../components';
 import { getWeeklyData } from '../utils/statsHelper';
 
 export default function HobbyDetailScreen({ route, navigation }) {
@@ -93,7 +93,7 @@ export default function HobbyDetailScreen({ route, navigation }) {
 
           <View style={styles.heroCenter}>
             <View style={styles.iconWrapper}>
-              <Text style={styles.icon}>{hobby.icon}</Text>
+              <IconRenderer iconName={hobby.icon} size={48} color={hobby.color} />
             </View>
             <Text style={styles.title}>{hobby.name}</Text>
             <View style={styles.categoryBadge}>
@@ -279,9 +279,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 6,
-  },
-  icon: {
-    fontSize: 48,
   },
   title: {
     fontSize: 32,

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft, Heart, MessageCircle, Send } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync, incrementCommentCountAsync } from '../slices/postsSlice';
 import { addCommentAsync, fetchCommentsByPost } from '../slices/commentsSlice';
@@ -109,13 +110,12 @@ export default function PostDetailScreen({ route, navigation }) {
             </View>
 
             {/* Hobby tag */}
-            {hobby && (
-              <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15` }]}>
+              <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
                 <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
-                  {hobby.icon} {hobby.name}
+                  {hobby.name}
                 </Text>
               </View>
-            )}
 
             <Text style={styles.postTitle}>{post.title}</Text>
             <Text style={styles.postContent}>{post.content}</Text>

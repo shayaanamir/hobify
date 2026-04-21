@@ -4,6 +4,7 @@ import {
   TouchableOpacity, TextInput,
 } from 'react-native';
 import { Trophy, TrendingUp, Plus, X } from 'lucide-react-native';
+import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoalCard } from '../components';
 import { addGoalAsync, fetchGoals } from '../slices/goalsSlice';
@@ -145,7 +146,7 @@ export default function GoalsScreen() {
                       },
                     ]}
                   >
-                    <Text style={{ fontSize: 13 }}>{hobby.icon}</Text>
+                    <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
                     <Text style={[styles.chipText, { color: selected ? hobby.color : '#6B7280' }]}>
                       {hobby.name}
                     </Text>
@@ -252,7 +253,10 @@ export default function GoalsScreen() {
             <View key={goal.id} style={styles.goalGroupWrapper}>
               <View style={[styles.colorBar, { backgroundColor: hobby.color }]} />
               <View style={styles.goalGroupContent}>
-                <Text style={styles.hobbyLabel}>{hobby.icon} {hobby.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />
+                  <Text style={styles.hobbyLabel}>{hobby.name}</Text>
+                </View>
                 <GoalCard goal={goal} color={hobby.color} />
               </View>
             </View>

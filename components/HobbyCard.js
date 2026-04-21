@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ChevronRight, Clock, Flame } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { IconRenderer } from './IconRenderer';
 
 // ─── Mini circular progress ring ─────────────────────────────────────────────
 
@@ -73,7 +74,7 @@ export function HobbyCard({ hobby, onPress, compact = false, goalProgress = null
         {/* Left: icon + name */}
         <View style={styles.leftSection}>
           <View style={[styles.iconContainer, { backgroundColor: `${accentColor}20` }]}>
-            <Text style={styles.icon}>{hobby.icon}</Text>
+            <IconRenderer iconName={hobby.icon} size={20} color={accentColor} />
           </View>
 
           <View style={styles.textContainer}>
