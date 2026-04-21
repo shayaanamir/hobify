@@ -4,12 +4,19 @@ import { Clock, Star } from 'lucide-react-native';
 
 export function SessionItem({ session, color = '#3B82F6' }) {
   if (!session) return null;
-  
+
   const date = new Date(session.date);
   const isToday = new Date().toDateString() === date.toDateString();
   const dateStr = isToday
     ? 'Today'
     : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  const formatDuration = (minutes) => {
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
 
   return (
     <View style={styles.container}>
@@ -50,7 +57,7 @@ export function SessionItem({ session, color = '#3B82F6' }) {
         <View style={styles.timeRow}>
           <View style={styles.duration}>
             <Clock size={14} color="#9CA3AF" />
-            <Text style={styles.durationText}>{session.duration} min</Text>
+            <Text style={styles.durationText}>{formatDuration(session.duration)}</Text>
           </View>
           <Text style={styles.timeText}>
             {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

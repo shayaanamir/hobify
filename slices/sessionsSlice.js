@@ -25,10 +25,12 @@ export const logSessionAsync = createAsyncThunk(
   'sessions/logSessionAsync',
   async ({ userId, session }, { rejectWithValue }) => {
     try {
+      const now = new Date().toISOString();
       const data = {
         userId,
         ...session,
-        createdAt: new Date().toISOString(),
+        date: session.date || now,
+        createdAt: now,
       };
       const id = await addDocument('sessions', data);
       return { id, ...data };

@@ -15,13 +15,17 @@ export default function HobbyDetailScreen({ route, navigation }) {
 
   const sessions = useSelector((state) => {
     const s = state.sessions.items.filter((item) => item.hobbyId === hobbyId);
-    return s.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return s.sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   });
 
   const goals = useSelector((state) =>
     state.goals.items.filter((g) => g.hobbyId === hobbyId)
   );
-  
+
   const weeklyData = useMemo(() => getWeeklyData(sessions), [sessions]);
 
   // Aggregate media items for "My Collection"
@@ -31,7 +35,7 @@ export default function HobbyDetailScreen({ route, navigation }) {
 
     sessions.forEach((session) => {
       if (!session.mediaTitle) return;
-      
+
       const existing = itemsMap.get(session.mediaTitle);
       if (existing) {
         itemsMap.set(session.mediaTitle, {
@@ -79,8 +83,8 @@ export default function HobbyDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Content */}
         <View style={styles.heroContent}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -118,7 +122,7 @@ export default function HobbyDetailScreen({ route, navigation }) {
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => navigation.navigate('LogSession', { hobbyId: hobby.id })}
               style={[styles.primaryButton, { backgroundColor: hobby.color, shadowColor: hobby.color }]}
             >
