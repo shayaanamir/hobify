@@ -51,10 +51,14 @@ export function getWeeklyGoalProgress(hobby, goals = [], sessions = []) {
 
   let current = goal.current ?? 0;
 
-  if (goal.type === 'sessions') {
+  if (goal.type === 'sessions_per_week') {
     current = weekSessions.length;
-  } else if (goal.type === 'hours') {
+  } else if (goal.type === 'weekly_hours') {
     current = +weekSessions.reduce((a, s) => a + (s.duration || 0) / 60, 0).toFixed(2);
+  } else if (goal.type === 'completed_items_per_week') {
+    current = weekSessions.filter(s => s.status === 'completed').length;
+  } else if (goal.type === 'streak_days') {
+    current = hobby.streak || 0;
   }
 
   return Math.min(100, Math.round((current / goal.target) * 100));

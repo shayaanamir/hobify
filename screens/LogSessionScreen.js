@@ -72,6 +72,8 @@ export default function LogSessionScreen({ route, navigation }) {
         // Use the streak value that the slice actually computed — don't
         // re-derive it here, since same-day sessions must not bump the count.
         newCurrent = updatedStreak;
+      } else if (goal.type === 'completed_items_per_week' && status === 'completed') {
+        newCurrent += 1;
       }
 
       if (newCurrent !== goal.current) {

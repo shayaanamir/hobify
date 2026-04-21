@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Target, CheckCircle2 } from 'lucide-react-native';
+import { Target, CheckCircle2, Trash2 } from 'lucide-react-native';
+import { TouchableOpacity } from 'react-native';
 
-export function GoalCard({ goal, color = '#3B82F6' }) {
+export function GoalCard({ goal, color = '#3B82F6', onDelete }) {
   if (!goal) return null;
   
   const progress = Math.min(goal.current / goal.target, 1);
@@ -13,6 +14,7 @@ export function GoalCard({ goal, color = '#3B82F6' }) {
   if (goal.type === 'weekly_hours') goalTypeLabel = 'Weekly Hours';
   if (goal.type === 'sessions_per_week') goalTypeLabel = 'Weekly Sessions';
   if (goal.type === 'streak_days') goalTypeLabel = 'Streak Goal';
+  if (goal.type === 'completed_items_per_week') goalTypeLabel = 'Items Completed';
 
   return (
     <View style={styles.card}>
@@ -27,9 +29,16 @@ export function GoalCard({ goal, color = '#3B82F6' }) {
           </View>
           <Text style={styles.title}>{goalTypeLabel}</Text>
         </View>
-        <Text style={styles.progressText}>
-          {goal.current} / {goal.target} {goal.unit}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={styles.progressText}>
+            {goal.current} / {goal.target} {goal.unit}
+          </Text>
+          {onDelete && (
+            <TouchableOpacity onPress={() => onDelete(goal.id)} style={styles.deleteBtn}>
+              <Trash2 size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.progressBarBackground}>
@@ -98,4 +107,8 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+  deleteBtn: {
+    padding: 4,
+    marginLeft: 4,
+  }
 });

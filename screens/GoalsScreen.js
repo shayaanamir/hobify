@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
-  TouchableOpacity, TextInput,
+  TouchableOpacity, TextInput, Alert
 } from 'react-native';
 import { Trophy, TrendingUp, Plus, X } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoalCard } from '../components';
-import { addGoalAsync, fetchGoals } from '../slices/goalsSlice';
+import { addGoalAsync, fetchGoals, removeGoalAsync } from '../slices/goalsSlice';
 import { selectUser } from '../slices/authSlice';
+import { selectAllSessions, fetchSessions } from '../slices/sessionsSlice';
 
 // ── Progress Ring ──────────────────────────────────────────────────────────────
 function ProgressRing({ progress, size = 100, color = '#10B981', trackColor = '#374151' }) {
@@ -41,9 +42,10 @@ function ProgressRing({ progress, size = 100, color = '#10B981', trackColor = '#
 
 // ── Goal types config ──────────────────────────────────────────────────────────
 const GOAL_TYPES = [
-  { type: 'weekly_hours',      label: 'Weekly Hours',    unit: 'hours',   defaultTarget: 5 },
-  { type: 'sessions_per_week', label: 'Sessions / Week', unit: 'sessions', defaultTarget: 3 },
-  { type: 'streak_days',       label: 'Streak Days',     unit: 'days',    defaultTarget: 7 },
+  { type: 'weekly_hours', label: 'Weekly Hours', unit: 'hours', defaultTarget: 5, forType: 'activity' },
+  { type: 'sessions_per_week', label: 'Sessions / Week', unit: 'sessions', defaultTarget: 3, forType: 'both' },
+  { type: 'streak_days', label: 'Streak Days', unit: 'days', defaultTarget: 7, forType: 'both' },
+  { type: 'completed_items_per_week', label: 'Items Completed', unit: 'items', defaultTarget: 1, forType: 'media' },
 ];
 
 // ── Screen ─────────────────────────────────────────────────────────────────────
@@ -53,12 +55,15 @@ export default function GoalsScreen() {
   const goals  = useSelector((state) => state.goals.items);
   const hobbies = useSelector((state) => state.hobbies.items);
   const goalsStatus = useSelector((state) => state.goals.status);
+  const sessions = useSelector(selectAllSessions);
+  const sessionsStatus = useSelector((state) => state.sessions.status);
 
   useEffect(() => {
-    if (user?.uid && goalsStatus === 'idle') {
-      dispatch(fetchGoals(user.uid));
+    if (user?.uid) {
+      if (goalsStatus === 'idle') dispatch(fetchGoals(user.uid));
+      if (sessionsStatus === 'idle') dispatch(fetchSessions(user.uid));
     }
-  }, [user?.uid, goalsStatus, dispatch]);
+  }, [user?.uid, goalsStatus, sessionsStatus, dispatch]);
 
   const [showForm, setShowForm]       = useState(false);
   const [formHobbyId, setFormHobbyId] = useState('');
@@ -74,6 +79,24 @@ export default function GoalsScreen() {
 
   const handleSave = () => {
     if (!canSave || !user) return;
+    // Calculate initial progress from existing sessions in the last 7 days
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const hobbySessions = sessions.filter(
+      (s) => s.hobbyId === formHobbyId && new Date(s.date) >= weekAgo
+    );
+
+    let initialCurrent = 0;
+    if (formType === 'sessions_per_week') {
+      initialCurrent = hobbySessions.length;
+    } else if (formType === 'weekly_hours') {
+      initialCurrent = +hobbySessions.reduce((a, s) => a + (s.duration || 0) / 60, 0).toFixed(2);
+    } else if (formType === 'completed_items_per_week') {
+      initialCurrent = hobbySessions.filter(s => s.status === 'completed').length;
+    } else if (formType === 'streak_days') {
+      const hobby = hobbies.find(h => h.id === formHobbyId);
+      initialCurrent = hobby?.streak || 0;
+    }
+
     dispatch(addGoalAsync({
       userId: user.uid,
       goal: {
@@ -81,12 +104,28 @@ export default function GoalsScreen() {
         type:    formType,
         target:  Number(formTarget),
         unit:    selectedGoalType.unit,
+        current: initialCurrent,
       },
     }));
     setShowForm(false);
     setFormHobbyId('');
     setFormType(GOAL_TYPES[0].type);
     setFormTarget('');
+  };
+
+  const handleDelete = (goalId) => {
+    Alert.alert(
+      'Delete Goal',
+      'Are you sure you want to remove this goal?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: () => dispatch(removeGoalAsync(goalId)) 
+        },
+      ]
+    );
   };
 
   return (
@@ -158,7 +197,12 @@ export default function GoalsScreen() {
             {/* Goal type */}
             <Text style={styles.formLabel}>Goal Type</Text>
             <View style={styles.chipWrap}>
-              {GOAL_TYPES.map((gt) => {
+              {GOAL_TYPES.filter(gt => {
+                if (!formHobbyId) return gt.forType !== 'media';
+                const hobby = hobbies.find(h => h.id === formHobbyId);
+                if (gt.forType === 'both') return true;
+                return hobby?.type === gt.forType;
+              }).map((gt) => {
                 const selected = formType === gt.type;
                 return (
                   <TouchableOpacity
@@ -215,7 +259,9 @@ export default function GoalsScreen() {
                 ? [2, 5, 8, 10]
                 : formType === 'sessions_per_week'
                   ? [2, 3, 5, 7]
-                  : [3, 7, 14, 30]
+                  : formType === 'completed_items_per_week'
+                    ? [1, 2, 3, 5]
+                    : [3, 7, 14, 30]
               ).map((v) => (
                 <TouchableOpacity
                   key={v}
@@ -257,7 +303,7 @@ export default function GoalsScreen() {
                   <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />
                   <Text style={styles.hobbyLabel}>{hobby.name}</Text>
                 </View>
-                <GoalCard goal={goal} color={hobby.color} />
+                <GoalCard goal={goal} color={hobby.color} onDelete={handleDelete} />
               </View>
             </View>
           );
