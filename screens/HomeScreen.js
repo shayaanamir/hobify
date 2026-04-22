@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { Clock, Flame, Trophy, ChevronRight, Library, Calendar, Check } from 'lucide-react-native';
+import { Clock, Flame, Trophy, ChevronRight, Library, Calendar, Check, BookOpen } from 'lucide-react-native';
 
 import { HobbyCard, WeeklyChart, StatCard } from '../components';
 import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/hobbiesSlice';
-import { fetchSessions, selectAllSessions } from '../slices/sessionsSlice';
+import { fetchSessions, selectAllSessions, fetchGlobalSessions, selectGlobalSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
 import { fetchPlannedActivities, selectAllPlannedActivities, toggleCompleteAsync } from '../slices/plannedActivitiesSlice';
 import { selectUser } from '../slices/authSlice';
 import { getWeeklyData, getStartOfWeek, getWeeklyGoalProgress } from '../utils/statsHelper';
 import { formatDuration } from '../utils/formatDuration';
+import { timeAgo } from '../utils/timeHelper';
 import { IconRenderer } from '../components';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ export default function HomeScreen({ navigation }) {
   const goals = useSelector(selectAllGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
   const plannedActivities = useSelector(selectAllPlannedActivities);
+  const globalSessions = useSelector(selectGlobalSessions);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -60,6 +62,7 @@ export default function HomeScreen({ navigation }) {
       dispatch(fetchGoals(user.uid));
     }
     dispatch(fetchPlannedActivities(user.uid));
+    dispatch(fetchGlobalSessions());
   }, [user?.uid, hobbiesStatus, goalsStatus, dispatch]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
@@ -78,6 +81,10 @@ export default function HomeScreen({ navigation }) {
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
+
+  const recentActivity = globalSessions
+    .filter(s => s.userId !== user?.uid)
+    .slice(0, 5);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -123,6 +130,72 @@ export default function HomeScreen({ navigation }) {
           />
         </Pressable>
       </View>
+
+      {/* Recent Activity Section */}
+      {recentActivity.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Pressable onPress={() => navigation.navigate('SocialTab')}>
+              <Text style={styles.seeAllLink}>See Feed</Text>
+            </Pressable>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.activityScroll}
+          >
+            {recentActivity.map((session) => {
+              const getActionVerb = () => {
+                const hName = (session.hobbyName || '').toLowerCase();
+                if (hName.includes('read') || hName.includes('book')) return 'read';
+                if (hName.includes('watch') || hName.includes('movie') || hName.includes('tv') || hName.includes('show')) return 'watched';
+                if (hName.includes('game') || hName.includes('play')) return 'played';
+                return 'logged';
+              };
+
+              return (
+                <View 
+                  key={session.id} 
+                  style={styles.activityCard}
+                >
+                  <View style={styles.activityHeader}>
+                    {session.userAvatarUrl ? (
+                      <Image source={{ uri: session.userAvatarUrl }} style={styles.activityAvatar} />
+                    ) : (
+                      <View style={styles.activityAvatarPlaceholder}>
+                        <Text style={styles.activityAvatarText}>👤</Text>
+                      </View>
+                    )}
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityUser} numberOfLines={1}>{session.userName || 'A fellow hobbyist'}</Text>
+                      <Text style={styles.activityTime}>{timeAgo(session.createdAt || session.date)}</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.activityActionRow}>
+                    <IconRenderer iconName={session.hobbyIcon || 'activity'} size={14} color={session.hobbyColor || '#6B7280'} />
+                    <Text style={styles.activityActionText}>
+                      {getActionVerb()} <Text style={styles.boldText}>{formatDuration(session.duration)}</Text> {session.hobbyName ? `of ${session.hobbyName}` : 'in their hobby'}
+                    </Text>
+                  </View>
+
+                {session.mediaTitle && (
+                  <View style={styles.activityMediaBadge}>
+                    <BookOpen size={10} color="#6B7280" />
+                    <Text style={styles.activityMediaText} numberOfLines={1}>{session.mediaTitle}</Text>
+                  </View>
+                )}
+                
+                {session.notes && (
+                  <Text style={styles.activityNotes} numberOfLines={2}>"{session.notes}"</Text>
+                )}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Upcoming Plans */}
       {upcomingPlans.length > 0 && (
@@ -284,6 +357,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#9CA3AF',
   },
+  seeAllLink: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
   hobbiesContainer: {
     gap: 0,
   },
@@ -332,6 +410,96 @@ const styles = StyleSheet.create({
   planTime: {
     fontSize: 11,
     color: '#9CA3AF',
+  },
+  activityScroll: {
+    paddingRight: 20,
+    paddingBottom: 4,
+  },
+  activityCard: {
+    width: 220,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  activityAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  activityAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityAvatarText: {
+    fontSize: 14,
+  },
+  activityInfo: {
+    marginLeft: 8,
+    flex: 1,
+  },
+  activityUser: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  activityTime: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  activityActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activityActionText: {
+    fontSize: 13,
+    color: '#374151',
+    marginLeft: 6,
+  },
+  boldText: {
+    fontWeight: '700',
+  },
+  activityNotes: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    marginTop: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: '#F3F4F6',
+    paddingLeft: 8,
+  },
+  activityMediaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  activityMediaText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+    maxWidth: 120,
   },
   collectionButton: {
     backgroundColor: '#FFFFFF',

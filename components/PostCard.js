@@ -6,6 +6,7 @@ import { toggleLikePostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
 import { useNavigation } from '@react-navigation/native';
 import { IconRenderer } from './IconRenderer';
+import { timeAgo } from '../utils/timeHelper';
 
 const TYPE_CONFIG = {
   achievement: { label: 'Achievement', icon: Trophy, bg: '#FEF3C7', text: '#92400E' },
@@ -14,15 +15,6 @@ const TYPE_CONFIG = {
   discussion: { label: 'Discussion', icon: MessageSquare, bg: '#ECFDF5', text: '#059669' },
   question: { label: 'Question', icon: HelpCircle, bg: '#FEE2E2', text: '#991B1B' },
 };
-
-function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${Math.max(0, mins)}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
 
 // ─── Post Author Avatar ───────────────────────────────────────────────────────
 // Priority: network photo → initials

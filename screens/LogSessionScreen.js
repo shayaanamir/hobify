@@ -93,7 +93,15 @@ export default function LogSessionScreen({ route, navigation }) {
       if (status) sessionData.status = status;
     }
 
-    await dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
+    await dispatch(logSessionAsync({ 
+      userId: user.uid, 
+      session: sessionData,
+      userName: user.name,
+      userAvatarUrl: user.photoURL || user.avatarUrl,
+      hobbyName: hobby.name,
+      hobbyIcon: hobby.icon,
+      hobbyColor: hobby.color
+    }));
     await dispatch(
       updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby })
     );

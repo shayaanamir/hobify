@@ -20,14 +20,31 @@ export const fetchSessions = createAsyncThunk(
   }
 );
 
+/** Fetch all sessions globally for recent activity feed */
+export const fetchGlobalSessions = createAsyncThunk(
+  'sessions/fetchGlobalSessions',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await queryCollection('sessions', [], { field: 'createdAt', direction: 'desc' });
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 /** Log a new session to Firestore */
 export const logSessionAsync = createAsyncThunk(
   'sessions/logSessionAsync',
-  async ({ userId, session }, { rejectWithValue }) => {
+  async ({ userId, session, userName, userAvatarUrl, hobbyName, hobbyIcon, hobbyColor }, { rejectWithValue }) => {
     try {
       const now = new Date().toISOString();
       const data = {
         userId,
+        userName,
+        userAvatarUrl,
+        hobbyName,
+        hobbyIcon,
+        hobbyColor,
         ...session,
         date: session.date || now,
         createdAt: now,
@@ -45,6 +62,7 @@ const sessionsSlice = createSlice({
   name: 'sessions',
   initialState: {
     items: [],
+    globalItems: [],
     selectedMediaTitle: null,
     selectedMediaHobbyId: null,
     status: 'idle',
@@ -69,8 +87,12 @@ const sessionsSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload;
       })
+      .addCase(fetchGlobalSessions.fulfilled, (state, action) => {
+        state.globalItems = action.payload;
+      })
       .addCase(logSessionAsync.fulfilled, (state, action) => {
         state.items.push(action.payload);
+        state.globalItems.unshift(action.payload);
       });
   },
 });
@@ -80,6 +102,7 @@ export default sessionsSlice.reducer;
 
 // ─────────────────────────── SELECTORS ────────────────────────────────────────
 export const selectAllSessions = (state) => state.sessions.items;
+export const selectGlobalSessions = (state) => state.sessions.globalItems;
 
 export const selectSessionsByHobbyId = (hobbyId) => (state) =>
   state.sessions.items.filter((s) => s.hobbyId === hobbyId);
