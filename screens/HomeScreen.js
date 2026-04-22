@@ -140,56 +140,59 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.seeAllLink}>See Feed</Text>
             </Pressable>
           </View>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.activityScroll}
           >
             {recentActivity.map((session) => {
-              const getActionVerb = () => {
-                const hName = (session.hobbyName || '').toLowerCase();
-                if (hName.includes('read') || hName.includes('book')) return 'read';
-                if (hName.includes('watch') || hName.includes('movie') || hName.includes('tv') || hName.includes('show')) return 'watched';
-                if (hName.includes('game') || hName.includes('play')) return 'played';
-                return 'logged';
-              };
-
               return (
                 <View 
                   key={session.id} 
                   style={styles.activityCard}
                 >
-                  <View style={styles.activityHeader}>
-                    {session.userAvatarUrl ? (
-                      <Image source={{ uri: session.userAvatarUrl }} style={styles.activityAvatar} />
-                    ) : (
-                      <View style={styles.activityAvatarPlaceholder}>
-                        <Text style={styles.activityAvatarText}>👤</Text>
-                      </View>
-                    )}
-                    <View style={styles.activityInfo}>
-                      <Text style={styles.activityUser} numberOfLines={1}>{session.userName || 'A fellow hobbyist'}</Text>
-                      <Text style={styles.activityTime}>{timeAgo(session.createdAt || session.date)}</Text>
+                <Pressable 
+                  style={styles.activityHeader}
+                  onPress={() => session.userId && navigation.navigate('UserProfile', { userId: session.userId })}
+                >
+                  {session.userAvatarUrl ? (
+                    <Image source={{ uri: session.userAvatarUrl }} style={styles.activityAvatar} />
+                  ) : (
+                    <View style={styles.activityAvatarPlaceholder}>
+                      <Text style={styles.activityAvatarText}>👤</Text>
                     </View>
+                  )}
+                  <View style={styles.activityInfo}>
+                    <Text style={styles.activityUser} numberOfLines={1}>{session.userName || 'A fellow hobbyist'}</Text>
+                    <Text style={styles.activityTime}>{timeAgo(session.createdAt || session.date)}</Text>
                   </View>
-                  
-                  <View style={styles.activityActionRow}>
-                    <IconRenderer iconName={session.hobbyIcon || 'activity'} size={14} color={session.hobbyColor || '#6B7280'} />
-                    <Text style={styles.activityActionText}>
-                      {getActionVerb()} <Text style={styles.boldText}>{formatDuration(session.duration)}</Text> {session.hobbyName ? `of ${session.hobbyName}` : 'in their hobby'}
-                    </Text>
-                  </View>
-
-                {session.mediaTitle && (
-                  <View style={styles.activityMediaBadge}>
-                    <BookOpen size={10} color="#6B7280" />
-                    <Text style={styles.activityMediaText} numberOfLines={1}>{session.mediaTitle}</Text>
-                  </View>
-                )}
+                </Pressable>
                 
-                {session.notes && (
-                  <Text style={styles.activityNotes} numberOfLines={2}>"{session.notes}"</Text>
-                )}
+                <View style={styles.activityActionRow}>
+                  <IconRenderer iconName={session.hobbyIcon || 'activity'} size={14} color={session.hobbyColor || '#6B7280'} />
+                  <Text style={styles.activityActionText}>
+                    Logged <Text style={styles.boldText}>{formatDuration(session.duration)}</Text> {session.hobbyName ? `of ${session.hobbyName}` : 'in their hobby'}
+                  </Text>
+                </View>
+
+                  {session.mediaTitle && (
+                    <Pressable
+                      style={styles.activityMediaBadge}
+                      onPress={() => navigation.navigate('MediaDetail', {
+                        mediaTitle: session.mediaTitle,
+                        mediaId: session.mediaId,
+                        hobbyId: session.hobbyId,
+                        tmdbMediaType: session.tmdbMediaType
+                      })}
+                    >
+                      <BookOpen size={10} color="#6B7280" />
+                      <Text style={styles.activityMediaText} numberOfLines={1}>{session.mediaTitle}</Text>
+                    </Pressable>
+                  )}
+
+                  {session.notes && (
+                    <Text style={styles.activityNotes} numberOfLines={2}>"{session.notes}"</Text>
+                  )}
                 </View>
               );
             })}

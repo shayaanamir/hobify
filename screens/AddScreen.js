@@ -27,14 +27,15 @@ const TYPE_OPTIONS = [
 /**
  * AddScreen — Full-screen modal for creating hobbies.
  */
-export default function AddScreen({ navigation }) {
+export default function AddScreen({ navigation, route }) {
+  const prefill = route.params?.prefill || {};
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const [name, setName] = useState('');
-  const [type, setType] = useState('activity');
-  const [category, setCategory] = useState('Creative');
-  const [icon, setIcon] = useState(HOBBY_ICONS[0].icon);
-  const [color, setColor] = useState(COLORS[0]);
+  const [name, setName] = useState(prefill.name || '');
+  const [type, setType] = useState(prefill.type || 'activity');
+  const [category, setCategory] = useState(prefill.category || 'Creative');
+  const [icon, setIcon] = useState(prefill.icon || HOBBY_ICONS[0].icon);
+  const [color, setColor] = useState(prefill.color || COLORS[0]);
 
   const handleCreate = () => {
     if (!name.trim() || !user) return;

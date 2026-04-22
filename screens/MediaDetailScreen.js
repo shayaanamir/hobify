@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, ActivityIndicator, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Star, Clock, CheckCircle2, Calendar, Layout, User, BookOpen, Plus } from 'lucide-react-native';
 import { SessionItem, IconRenderer } from '../components';
@@ -16,7 +16,7 @@ export default function MediaDetailScreen({ route, navigation }) {
 
   const sessions = useSelector((state) => state.sessions.items);
   const allHobbies = useSelector((state) => state.hobbies.items);
-  
+
   // Try to find tmdbMediaType and mediaId from sessions if not in params
   const sessionForMedia = sessions.find(s => s.mediaTitle === mediaTitle && s.hobbyId === hobbyId);
   const resolvedMediaId = mediaId || sessionForMedia?.mediaId;
@@ -27,11 +27,11 @@ export default function MediaDetailScreen({ route, navigation }) {
       let idToFetch = resolvedMediaId;
       setLoading(true);
       try {
-        const searchType = hobby?.name.toLowerCase().includes('game') ? 'game' 
-                         : hobby?.name.toLowerCase().includes('book') || hobby?.name.toLowerCase().includes('reading') ? 'book' 
-                         : resolvedMediaId?.startsWith('igdb_') ? 'game'
-                         : resolvedMediaId?.startsWith('ol_') ? 'book'
-                         : 'movie';
+        const searchType = hobby?.name.toLowerCase().includes('game') ? 'game'
+          : hobby?.name.toLowerCase().includes('book') || hobby?.name.toLowerCase().includes('reading') ? 'book'
+            : resolvedMediaId?.startsWith('igdb_') ? 'game'
+              : resolvedMediaId?.startsWith('ol_') ? 'book'
+                : 'movie';
 
         // Fallback: If no ID but we have a title, search for it
         if (!idToFetch && mediaTitle) {
@@ -47,7 +47,7 @@ export default function MediaDetailScreen({ route, navigation }) {
           setLoading(false);
           return;
         }
-        
+
         const data = await getMediaDetails(idToFetch, searchType, resolvedTmdbMediaType);
         if (data) {
           setDetails(data);
@@ -87,7 +87,7 @@ export default function MediaDetailScreen({ route, navigation }) {
     const name = hobby?.name.toLowerCase() || '';
     const isBook = name.includes('reading') || name.includes('book') || resolvedMediaId?.startsWith('ol_');
     const isVideo = name.includes('movie') || name.includes('tv') || name.includes('show') || resolvedMediaId?.startsWith('tmdb_');
-    
+
     if (isBook) return 'Reading';
     if (isVideo) return 'Watching';
     return 'Playing';
@@ -97,21 +97,21 @@ export default function MediaDetailScreen({ route, navigation }) {
     // Try to find a hobby that matches this media
     let targetHobbyId = hobbyId;
     const userHasHobby = allHobbies.find(h => h.id === hobbyId);
-    
+
     if (!userHasHobby) {
       const searchType = details?.media_type || (resolvedMediaId?.startsWith('igdb_') ? 'game' : resolvedMediaId?.startsWith('ol_') ? 'book' : 'movie');
-      const similarHobby = allHobbies.find(h => 
+      const similarHobby = allHobbies.find(h =>
         h.type === 'media' && (
           (searchType === 'game' && h.name.toLowerCase().includes('game')) ||
           (searchType === 'book' && (h.name.toLowerCase().includes('reading') || h.name.toLowerCase().includes('book'))) ||
           (searchType === 'movie' && (h.name.toLowerCase().includes('movie') || h.name.toLowerCase().includes('film'))) ||
           (searchType === 'tv' && (h.name.toLowerCase().includes('tv') || h.name.toLowerCase().includes('show')))
         )
-      ) || allHobbies.find(h => h.type === 'media');
-      
+      );
+
       targetHobbyId = similarHobby?.id;
     }
-    
+
     if (targetHobbyId) {
       navigation.navigate('LogSession', {
         hobbyId: targetHobbyId,
@@ -123,26 +123,41 @@ export default function MediaDetailScreen({ route, navigation }) {
         }
       });
     } else {
-      navigation.navigate('Add');
+      const searchType = details?.media_type || (resolvedMediaId?.startsWith('igdb_') ? 'game' : resolvedMediaId?.startsWith('ol_') ? 'book' : 'movie');
+      
+      const prefill = searchType === 'game' 
+        ? { name: 'Gaming', icon: 'Gamepad2', color: '#A78BFA', category: 'Media', type: 'media' }
+        : searchType === 'book'
+          ? { name: 'Reading', icon: 'BookOpen', color: '#FBBF24', category: 'Media', type: 'media' }
+          : { name: 'Movies', icon: 'Clapperboard', color: '#60A5FA', category: 'Media', type: 'media' };
+
+      Alert.alert(
+        "Hobby Not Found",
+        `You don't have a hobby to log this under. Would you like to add a matching hobby to your profile?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Add Hobby", onPress: () => navigation.navigate('Add', { prefill }) }
+        ]
+      );
     }
   };
 
-  const coverUrl = details?.cover?.image_id 
+  const coverUrl = details?.cover?.image_id
     ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${details.cover.image_id}.jpg`
-    : details?.poster_path 
+    : details?.poster_path
       ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
       : details?.covers?.[0]
         ? `https://covers.openlibrary.org/b/id/${details.covers[0]}-L.jpg`
         : mediaSessions.find(s => s.mediaCoverUrl)?.mediaCoverUrl;
 
   const description = details?.summary || details?.overview || details?.description || '';
-  const releaseYear = details?.first_release_date 
+  const releaseYear = details?.first_release_date
     ? new Date(details.first_release_date * 1000).getFullYear()
     : details?.release_date?.split('-')[0] || details?.first_publish_year || details?.created?.value?.split('-')[0] || '';
 
-  const subtitle = details?.involved_companies?.find(c => c.company?.name)?.company?.name 
-                 || (details?.author_name ? details.author_name[0] : null)
-                 || (details?.media_type === 'tv' ? 'TV Series' : details?.release_date ? 'Movie' : details?.title ? 'Book' : '');
+  const subtitle = details?.involved_companies?.find(c => c.company?.name)?.company?.name
+    || (details?.author_name ? details.author_name[0] : null)
+    || (details?.media_type === 'tv' ? 'TV Series' : details?.release_date ? 'Movie' : details?.title ? 'Book' : '');
 
   return (
     <View style={styles.root}>
@@ -155,7 +170,7 @@ export default function MediaDetailScreen({ route, navigation }) {
             <View style={[styles.heroPlaceholder, { backgroundColor: hobby?.color || '#111827' }]} />
           )}
           <View style={styles.heroOverlay} />
-          
+
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <ArrowLeft size={20} color="#FFFFFF" />
           </TouchableOpacity>
@@ -173,11 +188,11 @@ export default function MediaDetailScreen({ route, navigation }) {
                 </View>
               )}
             </View>
-            
+
             <View style={styles.mainInfo}>
               <Text style={styles.titleText}>{mediaTitle}</Text>
               {subtitle && <Text style={styles.subtitleText}>{subtitle}</Text>}
-              
+
               <View style={styles.badgesWrapper}>
                 <View style={[styles.badge, { backgroundColor: `${hobby?.color || '#6B7280'}15` }]}>
                   <Text style={[styles.badgeText, { color: hobby?.color || '#6B7280' }]}>{hobby?.name || 'Media'}</Text>
@@ -202,7 +217,7 @@ export default function MediaDetailScreen({ route, navigation }) {
                 ))}
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.inlineLogButton, { backgroundColor: hobby?.color || '#111827' }]}
                 onPress={handleLogPress}
                 activeOpacity={0.8}
@@ -249,7 +264,7 @@ export default function MediaDetailScreen({ route, navigation }) {
               <Text style={styles.sectionTitle}>Activity</Text>
               <Clock size={16} color="#9CA3AF" />
             </View>
-            
+
             <View style={styles.historyContainer}>
               {mediaSessions.length > 0 ? (
                 mediaSessions.map((session) => (
@@ -319,7 +334,7 @@ const styles = StyleSheet.create({
   },
   mainCoverWrapper: {
     width: 120,
-    aspectRatio: 2/3,
+    aspectRatio: 2 / 3,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
