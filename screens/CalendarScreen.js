@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, TextInput } from 'react-native';
-import { ChevronLeft, ChevronRight, Clock, Plus, Minus, X, Check } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, CalendarFold, Plus, Minus, X, Check } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { SessionItem, IconRenderer } from '../components';
 import { addPlannedActivityAsync, toggleCompleteAsync, fetchPlannedActivities } from '../slices/plannedActivitiesSlice';
@@ -103,7 +103,7 @@ export default function CalendarScreen() {
   const groupedSessions = useMemo(() => {
     const ds = sessions.filter((s) => isSameDay(new Date(s.date), selectedDate))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
+
     const groups = {};
     ds.forEach(s => {
       if (!groups[s.hobbyId]) {
@@ -377,7 +377,7 @@ export default function CalendarScreen() {
                         </Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.sessionList}>
                       {group.items.map((session, idx) => (
                         <View key={session.id} style={[
@@ -455,7 +455,7 @@ export default function CalendarScreen() {
           {/* Empty State */}
           {(groupedSessions.length === 0 && dayPlanned.length === 0 && !showPlanForm) && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>📅</Text>
+              <CalendarFold size={60} style={{ marginBottom: 10 }} />
               <Text style={styles.emptyText}>Nothing here yet</Text>
               <TouchableOpacity onPress={() => setShowPlanForm(true)} style={styles.planBtnBase}>
                 <Plus size={14} color="#FFF" />
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
-  
+
   // Hobby Grouping
   hobbyGroupCard: {
     backgroundColor: '#FFFFFF',

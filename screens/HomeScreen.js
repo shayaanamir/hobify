@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { Clock, Flame, Trophy, ChevronRight, Library } from 'lucide-react-native';
+import { Clock, Flame, Trophy, ChevronRight, Library, Calendar, Check } from 'lucide-react-native';
 
 import { HobbyCard, WeeklyChart, StatCard } from '../components';
 import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/hobbiesSlice';
 import { fetchSessions, selectAllSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
+import { fetchPlannedActivities, selectAllPlannedActivities, toggleCompleteAsync } from '../slices/plannedActivitiesSlice';
 import { selectUser } from '../slices/authSlice';
 import { getWeeklyData, getStartOfWeek, getWeeklyGoalProgress } from '../utils/statsHelper';
 import { formatDuration } from '../utils/formatDuration';
+import { IconRenderer } from '../components';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +48,7 @@ export default function HomeScreen({ navigation }) {
   const sessions = useSelector(selectAllSessions);
   const goals = useSelector(selectAllGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
+  const plannedActivities = useSelector(selectAllPlannedActivities);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -56,6 +59,7 @@ export default function HomeScreen({ navigation }) {
     if (goalsStatus === 'idle') {
       dispatch(fetchGoals(user.uid));
     }
+    dispatch(fetchPlannedActivities(user.uid));
   }, [user?.uid, hobbiesStatus, goalsStatus, dispatch]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
@@ -64,6 +68,16 @@ export default function HomeScreen({ navigation }) {
   const { done: goalsDone, total: goalsTotal } = getGoalsSummary(goals);
   const weeklyData = getWeeklyData(sessions);
   const activeHobbies = hobbies.slice(0, 4);
+
+  const upcomingPlans = plannedActivities
+    .filter(a => {
+      const d = new Date(a.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today && !a.completed;
+    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 3);
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -109,6 +123,49 @@ export default function HomeScreen({ navigation }) {
           />
         </Pressable>
       </View>
+
+      {/* Upcoming Plans */}
+      {upcomingPlans.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Upcoming Plans</Text>
+            <Pressable onPress={() => navigation.navigate('CalendarTab')} style={styles.seeAllButton}>
+              <Text style={styles.seeAllText}>Calendar</Text>
+              <ChevronRight size={14} color="#9CA3AF" />
+            </Pressable>
+          </View>
+          <View style={styles.plansContainer}>
+            {upcomingPlans.map((plan) => {
+              const hobby = hobbies.find(h => h.id === plan.hobbyId);
+              if (!hobby) return null;
+              const planDate = new Date(plan.date);
+              const isToday = planDate.toDateString() === new Date().toDateString();
+
+              return (
+                <View key={plan.id} style={styles.planCard}>
+                  <Pressable
+                    onPress={() => dispatch(toggleCompleteAsync({ activityId: plan.id, completed: false }))}
+                    style={[styles.planCheck, { borderColor: hobby.color }]}
+                  >
+                    {plan.completed && <Check size={12} color={hobby.color} />}
+                  </Pressable>
+                  <View style={styles.planInfo}>
+                    <Text style={styles.planTitle} numberOfLines={1}>{plan.title}</Text>
+                    <View style={styles.planMeta}>
+                      <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
+                      <Text style={[styles.planHobby, { color: hobby.color }]}>{hobby.name}</Text>
+                      <Text style={styles.planTime}>
+                        {isToday ? 'Today' : planDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {' · '}{formatDuration(plan.duration)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       {/* Weekly Activity — real session data */}
       <View style={styles.section}>
@@ -229,6 +286,52 @@ const styles = StyleSheet.create({
   },
   hobbiesContainer: {
     gap: 0,
+  },
+  plansContainer: {
+    gap: 8,
+  },
+  planCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  planCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  planMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  planHobby: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  planTime: {
+    fontSize: 11,
+    color: '#9CA3AF',
   },
   collectionButton: {
     backgroundColor: '#FFFFFF',
