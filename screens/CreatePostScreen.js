@@ -70,10 +70,10 @@ export default function CreatePostScreen({ navigation }) {
         hobbyColor: selectedHobby?.color || null,
         hobbyIcon: selectedHobby?.icon || null,
         hobbyCategory: selectedHobby?.category || null,
-        mediaTitle: isMediaHobby ? taggedMedia?.title : null,
-        mediaCoverUrl: isMediaHobby ? taggedMedia?.coverUrl : null,
-        mediaId: isMediaHobby ? taggedMedia?.id : null,
-        tmdbMediaType: isMediaHobby ? taggedMedia?.tmdbMediaType : null,
+        mediaTitle: isMediaHobby ? taggedMedia?.title || null : null,
+        mediaCoverUrl: isMediaHobby ? taggedMedia?.coverUrl || null : null,
+        mediaId: isMediaHobby ? taggedMedia?.id || null : null,
+        tmdbMediaType: isMediaHobby ? taggedMedia?.tmdbMediaType || null : null,
       }
     }));
 
