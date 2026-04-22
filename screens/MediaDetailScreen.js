@@ -76,13 +76,13 @@ export default function MediaDetailScreen({ route, navigation }) {
 
   // Get latest status and rating
   const latestSession = mediaSessions[0];
-  const status =
-    mediaSessions.find((s) => s.status === 'completed')?.status ||
-    latestSession?.status ||
-    'in-progress';
+  const status = mediaSessions.length > 0
+    ? (mediaSessions.find((s) => s.status === 'completed')?.status || latestSession?.status || 'in-progress')
+    : 'na';
   const rating = mediaSessions.find((s) => s.rating)?.rating;
 
   const getStatusLabel = () => {
+    if (status === 'na') return 'N/A';
     if (status === 'completed') return 'Done';
     const name = hobby?.name.toLowerCase() || '';
     const isBook = name.includes('reading') || name.includes('book') || resolvedMediaId?.startsWith('ol_');
