@@ -50,36 +50,10 @@ export default function LogSessionScreen({ route, navigation }) {
       if (status) sessionData.status = status;
     }
 
-    // Await so that the Redux state (including the updated streak) reflects
-    // the new lastSessionDate before we read it for goal progress below.
     await dispatch(logSessionAsync({ userId: user.uid, session: sessionData }));
-    const statsResult = await dispatch(
+    await dispatch(
       updateHobbyStatsAsync({ hobbyId: hobby.id, durationMinutes: duration, currentHobby: hobby })
     );
-
-    // The slice returns the computed updates (including the real new streak).
-    const updatedStreak = statsResult?.payload?.updates?.streak ?? hobby.streak;
-
-    goals.forEach((goal) => {
-      let newCurrent = goal.current || 0;
-
-      if (goal.type === 'weekly_hours') {
-        newCurrent += duration / 60;
-        newCurrent = Math.round(newCurrent * 10) / 10;
-      } else if (goal.type === 'sessions_per_week') {
-        newCurrent += 1;
-      } else if (goal.type === 'streak_days') {
-        // Use the streak value that the slice actually computed — don't
-        // re-derive it here, since same-day sessions must not bump the count.
-        newCurrent = updatedStreak;
-      } else if (goal.type === 'completed_items_per_week' && status === 'completed') {
-        newCurrent += 1;
-      }
-
-      if (newCurrent !== goal.current) {
-        dispatch(updateGoalProgressAsync({ goalId: goal.id, current: newCurrent }));
-      }
-    });
 
     navigation.goBack();
   };

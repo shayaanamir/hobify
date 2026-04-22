@@ -8,7 +8,7 @@ import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/h
 import { fetchSessions, selectAllSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
 import { selectUser } from '../slices/authSlice';
-import { getWeeklyData } from '../utils/statsHelper';
+import { getWeeklyData, getStartOfWeek } from '../utils/statsHelper';
 import { formatDuration } from '../utils/formatDuration';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -45,17 +45,16 @@ export function getWeeklyGoalProgress(hobby, goals = [], sessions = []) {
   if (!goal.target) return null;
 
   // For session-count / hours goals derive current from this week's sessions
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const startOfWeek = getStartOfWeek();
   const weekSessions = sessions.filter(
-    (s) => s.hobbyId === hobby.id && s.date && new Date(s.date) >= weekAgo
+    (s) => s.hobbyId === hobby.id && s.date && new Date(s.date) >= startOfWeek
   );
 
-  let current = goal.current ?? 0;
-
+  let current = 0;
   if (goal.type === 'sessions_per_week') {
     current = weekSessions.length;
   } else if (goal.type === 'weekly_hours') {
-    current = +weekSessions.reduce((a, s) => a + (s.duration || 0) / 60, 0).toFixed(2);
+    current = +weekSessions.reduce((a, s) => a + (s.duration || 0) / 60, 0).toFixed(1);
   } else if (goal.type === 'completed_items_per_week') {
     current = weekSessions.filter(s => s.status === 'completed').length;
   } else if (goal.type === 'streak_days') {

@@ -1,4 +1,13 @@
 /** Build weekly activity data (hours per day, mapped to M-S index) */
+export function getStartOfWeek() {
+  const now = new Date();
+  const day = now.getDay(); // 0 is Sun, 1 is Mon
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  const monday = new Date(now.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
 export function getWeeklyData(sessions = []) {
   const days = Array(7).fill(0);
   const now = new Date();

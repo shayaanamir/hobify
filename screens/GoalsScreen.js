@@ -10,6 +10,7 @@ import { GoalCard } from '../components';
 import { addGoalAsync, fetchGoals, removeGoalAsync } from '../slices/goalsSlice';
 import { selectUser } from '../slices/authSlice';
 import { selectAllSessions, fetchSessions } from '../slices/sessionsSlice';
+import { getStartOfWeek } from '../utils/statsHelper';
 
 // ── Progress Ring ──────────────────────────────────────────────────────────────
 function ProgressRing({ progress, size = 100, color = '#10B981', trackColor = '#374151' }) {
@@ -70,14 +71,37 @@ export default function GoalsScreen() {
   const [formType, setFormType] = useState(GOAL_TYPES[0].type);
   const [formTarget, setFormTarget] = useState('');
 
-  const totalGoals = goals.length;
-  const goalProgresses = goals.map((g) => Math.min((g.current || 0) / (g.target || 1), 1));
+  const startOfWeek = getStartOfWeek();
+
+  const enrichedGoals = goals.map(goal => {
+    const hobby = hobbies.find(h => h.id === goal.hobbyId);
+    const weekSessions = sessions.filter(s => 
+      s.hobbyId === goal.hobbyId && 
+      new Date(s.date) >= startOfWeek
+    );
+
+    let current = 0;
+    if (goal.type === 'sessions_per_week') {
+      current = weekSessions.length;
+    } else if (goal.type === 'weekly_hours') {
+      current = +weekSessions.reduce((acc, s) => acc + (s.duration || 0) / 60, 0).toFixed(1);
+    } else if (goal.type === 'completed_items_per_week') {
+      current = weekSessions.filter(s => s.status === 'completed').length;
+    } else if (goal.type === 'streak_days') {
+      current = hobby?.streak || 0;
+    }
+
+    return { ...goal, current };
+  });
+
+  const totalGoals = enrichedGoals.length;
+  const goalProgresses = enrichedGoals.map((g) => Math.min((g.current || 0) / (g.target || 1), 1));
   const consistency = totalGoals > 0
     ? goalProgresses.reduce((acc, p) => acc + p, 0) / totalGoals
     : 0;
 
-  const activeGoals = goals.filter(g => (g.current || 0) < (g.target || 1));
-  const completedGoals = goals.filter(g => (g.current || 0) >= (g.target || 1));
+  const activeGoals = enrichedGoals.filter(g => (g.current || 0) < (g.target || 1));
+  const completedGoals = enrichedGoals.filter(g => (g.current || 0) >= (g.target || 1));
 
   const selectedGoalType = GOAL_TYPES.find((t) => t.type === formType) || GOAL_TYPES[0];
   const canSave = formHobbyId && formTarget && Number(formTarget) > 0;
