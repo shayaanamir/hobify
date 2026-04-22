@@ -51,7 +51,9 @@ export function PostCard({ post }) {
   const handleTap = () => navigation.navigate('PostDetail', { postId: post.id });
 
   const handleAuthorTap = () => {
-    if (post.userId && post.userId !== user?.uid) {
+    if (post.userId === user?.uid) {
+      navigation.navigate('ProfileTab');
+    } else if (post.userId) {
       navigation.navigate('UserProfile', { userId: post.userId });
     }
   };

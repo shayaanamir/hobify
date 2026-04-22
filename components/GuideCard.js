@@ -9,10 +9,10 @@ export function GuideCard({ guide, onPress }) {
   const navigation = useNavigation();
   const currentUser = useSelector(selectUser);
 
-  const handleAuthorTap = (e) => {
-    // If we are already on a profile or it's our own, optional check:
-    // For simplicity, just navigate if it's not us or always navigate
-    if (guide.userId) {
+  const handleAuthorTap = () => {
+    if (guide.userId === currentUser?.uid) {
+      navigation.navigate('ProfileTab');
+    } else if (guide.userId) {
       navigation.navigate('UserProfile', { userId: guide.userId });
     }
   };

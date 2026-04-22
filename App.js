@@ -40,6 +40,7 @@ import CreatePostScreen   from './screens/CreatePostScreen';
 import EditProfileScreen  from './screens/EditProfileScreen';
 import UserProfileScreen  from './screens/UserProfileScreen';
 import CreateGuideScreen from './screens/CreateGuideScreen';
+import MyPostsScreen from './screens/MyPostsScreen';
 
 // ── Navigators ────────────────────────────────────────────────────────────────
 const Tab        = createBottomTabNavigator();
@@ -128,6 +129,7 @@ function AppNavigator() {
       />
       <RootStack.Screen name="UserProfile" component={UserProfileScreen} />
       <RootStack.Screen name="CreateGuide" component={CreateGuideScreen} />
+      <RootStack.Screen name="MyPosts" component={MyPostsScreen} />
     </RootStack.Navigator>
   );
 }

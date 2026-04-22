@@ -89,7 +89,13 @@ export default function GuideDetailScreen({ route, navigation }) {
         {/* Author & Meta */}
         <View style={styles.metaRow}>
           <TouchableOpacity 
-            onPress={() => guide.userId && navigation.navigate('UserProfile', { userId: guide.userId })}
+            onPress={() => {
+              if (guide.userId === user?.uid) {
+                navigation.navigate('ProfileTab');
+              } else if (guide.userId) {
+                navigation.navigate('UserProfile', { userId: guide.userId });
+              }
+            }}
             style={styles.authorRow}
             activeOpacity={0.7}
           >
