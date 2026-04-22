@@ -36,7 +36,7 @@ export const fetchPostsByUserIds = createAsyncThunk(
       }
       const results = await Promise.all(
         chunks.map(chunk =>
-          queryCollection('posts', [{ field: 'userId', op: 'in', value: chunk }], { field: 'createdAt', direction: 'desc' })
+          queryCollection('posts', [{ field: 'userId', op: 'in', value: chunk }])
         )
       );
       return results.flat().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
