@@ -167,11 +167,25 @@ export default function PostDetailScreen({ route, navigation }) {
           </TouchableOpacity>
 
           {/* Hobby & Media tags */}
-          {hobby && (
+          {(post.hobbyName || hobby) && (
             <View style={styles.tagsRow}>
-              <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
-                <Text style={[styles.hobbyTagText, { color: hobby.color }]}>{hobby.name}</Text>
+              <View style={[
+                styles.hobbyTag, 
+                { 
+                  backgroundColor: `${post.hobbyColor || hobby?.color || '#6B7280'}15`, 
+                  flexDirection: 'row', 
+                  alignItems: 'center', 
+                  gap: 4 
+                }
+              ]}>
+                <IconRenderer 
+                  iconName={post.hobbyIcon || hobby?.icon || 'activity'} 
+                  size={10} 
+                  color={post.hobbyColor || hobby?.color || '#6B7280'} 
+                />
+                <Text style={[styles.hobbyTagText, { color: post.hobbyColor || hobby?.color || '#6B7280' }]}>
+                  {post.hobbyName || hobby?.name}
+                </Text>
               </View>
 
               {post.mediaTitle && (

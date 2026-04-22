@@ -56,6 +56,9 @@ export default function CreatePostScreen({ navigation }) {
         content: postContent.trim(),
         type: postType,
         hobbyId: postHobbyId || null,
+        hobbyName: selectedHobby?.name || null,
+        hobbyColor: selectedHobby?.color || null,
+        hobbyIcon: selectedHobby?.icon || null,
         hobbyCategory: selectedHobby?.category || null,
         mediaTitle: isMediaHobby ? taggedMedia : null,
       }

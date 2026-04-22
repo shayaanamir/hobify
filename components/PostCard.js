@@ -92,14 +92,25 @@ export function PostCard({ post }) {
       </View>
 
       {/* Hobby & Media tags */}
-      {hobby && (
+      {(post.hobbyName || hobby) && (
         <View style={styles.tagsRow}>
           <View style={[
             styles.hobbyPill,
-            { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 },
+            { 
+              backgroundColor: `${post.hobbyColor || hobby?.color || '#6B7280'}15`, 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              gap: 4 
+            },
           ]}>
-            <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
-            <Text style={[styles.hobbyPillText, { color: hobby.color }]}>{hobby.name}</Text>
+            <IconRenderer 
+              iconName={post.hobbyIcon || hobby?.icon || 'activity'} 
+              size={12} 
+              color={post.hobbyColor || hobby?.color || '#6B7280'} 
+            />
+            <Text style={[styles.hobbyPillText, { color: post.hobbyColor || hobby?.color || '#6B7280' }]}>
+              {post.hobbyName || hobby?.name}
+            </Text>
           </View>
 
           {post.mediaTitle && (
