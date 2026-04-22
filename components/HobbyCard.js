@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ChevronRight, Clock, Flame } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { IconRenderer } from './IconRenderer';
+import { formatDuration } from '../utils/formatDuration';
 
 // ─── Mini circular progress ring ─────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export function HobbyCard({ hobby, onPress, compact = false, goalProgress = null
             {!compact && (
               <View style={styles.statsContainer}>
                 <Clock size={12} color="#6B7280" />
-                <Text style={styles.statsText}>{hobby.totalHours || 0}h total</Text>
+                <Text style={styles.statsText}>{formatDuration(hobby.totalHours || 0, 'hours')}</Text>
               </View>
             )}
           </View>
@@ -90,7 +91,7 @@ export function HobbyCard({ hobby, onPress, compact = false, goalProgress = null
 
         {/* Right: streak + progress / chevron */}
         <View style={styles.rightSection}>
-          {hobby.streak > 0 && (
+          {hobby.streak > 1 && (
             <View style={styles.streakBadge}>
               <Text style={styles.streakText}><Flame size={15} fill="#EA580C" color="#EA580C" /> {hobby.streak}</Text>
             </View>

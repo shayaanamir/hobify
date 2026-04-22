@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { formatDuration } from '../utils/formatDuration';
 
 export function WeeklyChart({
   data = [0, 0, 0, 0, 0, 0, 0],
@@ -24,7 +25,7 @@ export function WeeklyChart({
             {activeIndex === index && (
               <View style={styles.tooltip}>
                 <Text style={styles.tooltipText}>
-                  {value > 0 ? `${value}h` : '0h'}
+                  {value > 0 ? formatDuration(value, 'hours') : '0 min'}
                 </Text>
               </View>
             )}
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   tooltipText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: '700',
     color: '#FFFFFF',
   },

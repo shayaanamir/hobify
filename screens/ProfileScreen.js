@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from '
 import { User, Settings, Bell, Download, Info, ChevronRight, LogOut } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { signOutThunk, selectUser } from '../slices/authSlice';
+import { formatDuration } from '../utils/formatDuration';
 
 export default function ProfileScreen() {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ export default function ProfileScreen() {
         {/* Stats Summary */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Text style={styles.statVal}>{totalHours}</Text>
+            <Text style={styles.statVal}>{formatDuration(totalHours, 'hours')}</Text>
             <Text style={styles.statLabel}>Total Hours</Text>
           </View>
           <View style={styles.statCard}>

@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { SessionItem, IconRenderer } from '../components';
 import { addPlannedActivityAsync, toggleCompleteAsync, fetchPlannedActivities } from '../slices/plannedActivitiesSlice';
 import { selectUser } from '../slices/authSlice';
+import { formatDuration } from '../utils/formatDuration';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
@@ -299,8 +300,8 @@ export default function CalendarScreen() {
                   <Minus size={18} color="#4B5563" />
                 </TouchableOpacity>
                 <View style={styles.durTextWrap}>
-                  <Text style={styles.durTextVal}>{planDuration}</Text>
-                  <Text style={styles.durTextUnit}>min</Text>
+                  <Text style={styles.durTextVal}>{planDuration < 60 ? planDuration : Math.floor(planDuration / 60)}</Text>
+                  <Text style={styles.durTextUnit}>{planDuration < 60 ? 'min' : planDuration % 60 > 0 ? `h ${planDuration % 60}m` : 'h'}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setPlanDuration(Math.min(480, planDuration + 15))}
@@ -368,7 +369,7 @@ export default function CalendarScreen() {
                       </View>
                       <View style={styles.completedMeta}>
                         <Clock size={12} color="#9CA3AF" />
-                        <Text style={styles.completedDuration}>{session.duration}m</Text>
+                        <Text style={styles.completedDuration}>{formatDuration(session.duration)}</Text>
                       </View>
                     </View>
                   );
@@ -410,13 +411,13 @@ export default function CalendarScreen() {
                         >
                           {activity.title}
                         </Text>
-                          <View style={styles.plannedMetaWrap}>
-                            <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
-                            <Text style={[styles.plannedHobby, { color: hobby.color, marginLeft: 4 }]}>
-                              {hobby.name}
-                            </Text>
-                            <Text style={styles.plannedMetaDuration}> · {activity.duration}m</Text>
-                          </View>
+                        <View style={styles.plannedMetaWrap}>
+                          <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
+                          <Text style={[styles.plannedHobby, { color: hobby.color, marginLeft: 4 }]}>
+                            {hobby.name}
+                          </Text>
+                          <Text style={styles.plannedMetaDuration}> · {formatDuration(activity.duration)}</Text>
+                        </View>
                       </View>
                     </View>
                   );

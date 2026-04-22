@@ -9,6 +9,7 @@ import { fetchSessions, selectAllSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
 import { selectUser } from '../slices/authSlice';
 import { getWeeklyData } from '../utils/statsHelper';
+import { formatDuration } from '../utils/formatDuration';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -116,7 +117,7 @@ export default function HomeScreen({ navigation }) {
         <StatCard
           icon={Clock}
           label="Today"
-          value={`${todayHours}h`}
+          value={formatDuration(todayHours, 'hours')}
           color="#3B82F6"
           bgColor="#EFF6FF"
         />
