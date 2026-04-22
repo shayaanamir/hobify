@@ -78,7 +78,7 @@ export default function GuidesScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FAF8F5' },
   scrollContent: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 24,
+    paddingTop: Platform.OS === 'ios' ? 70 : 48,
     paddingHorizontal: 20,
     paddingBottom: 60,
   },
