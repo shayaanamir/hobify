@@ -1,4 +1,4 @@
-import { searchMoviesAndShows } from './tmdbService';
+import { searchMoviesAndShows, getMediaDetails as getTmdbDetails } from './tmdbService';
 import { searchGames } from './igdbService';
 import { searchBooks } from './openLibraryService';
 
@@ -16,4 +16,13 @@ export async function searchMedia(query, type) {
       console.warn(`Unknown media search type: ${type}`);
       return [];
   }
+}
+
+export async function getMediaDetails(id, type, mediaType) {
+  if (type === 'movie') {
+    // extract numeric ID from tmdb_ID
+    const tmdbId = id.replace('tmdb_', '');
+    return await getTmdbDetails(tmdbId, mediaType || 'movie');
+  }
+  return null;
 }

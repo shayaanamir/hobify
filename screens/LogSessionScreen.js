@@ -7,6 +7,7 @@ import { logSessionAsync } from '../slices/sessionsSlice';
 import { updateHobbyStatsAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
 import { updateGoalProgressAsync } from '../slices/goalsSlice';
+import { getMediaDetails } from '../services/mediaSearchService';
 
 
 export default function LogSessionScreen({ route, navigation }) {
@@ -39,7 +40,8 @@ export default function LogSessionScreen({ route, navigation }) {
           itemsMap.set(key, {
             id: s.mediaId,
             title: s.mediaTitle,
-            coverUrl: s.mediaCoverUrl
+            coverUrl: s.mediaCoverUrl,
+            tmdbMediaType: s.tmdbMediaType // Keep track of this
           });
         }
       }
@@ -55,8 +57,10 @@ export default function LogSessionScreen({ route, navigation }) {
   const [mediaTitle, setMediaTitle] = useState('');
   const [mediaCoverUrl, setMediaCoverUrl] = useState(null);
   const [mediaId, setMediaId] = useState(null);
+  const [tmdbMediaType, setTmdbMediaType] = useState(null);
   const [rating, setRating] = useState(undefined);
   const [status, setStatus] = useState('in-progress');
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   if (!hobby) return null;
 
@@ -76,6 +80,7 @@ export default function LogSessionScreen({ route, navigation }) {
         sessionData.mediaTitle = mediaTitle.trim();
         if (mediaCoverUrl) sessionData.mediaCoverUrl = mediaCoverUrl;
         if (mediaId) sessionData.mediaId = mediaId;
+        if (tmdbMediaType) sessionData.tmdbMediaType = tmdbMediaType;
       }
       if (rating !== undefined) sessionData.rating = rating;
       if (status) sessionData.status = status;
@@ -117,6 +122,35 @@ export default function LogSessionScreen({ route, navigation }) {
     return <Star size={16} color="#9CA3AF" />;
   };
 
+  const handleSelectMedia = async (media) => {
+    if (media) {
+      setMediaTitle(media.title);
+      setMediaCoverUrl(media.coverUrl);
+      setMediaId(media.id);
+      setTmdbMediaType(media.mediaType);
+
+      // If it's a movie/tv show, fetch details for runtime
+      if (media.id && String(media.id).startsWith('tmdb_')) {
+        setIsLoadingDetails(true);
+        try {
+          const details = await getMediaDetails(media.id, 'movie', media.mediaType);
+          if (details?.runtime) {
+            setDuration(details.runtime);
+          }
+        } catch (error) {
+          console.error('Error fetching media runtime:', error);
+        } finally {
+          setIsLoadingDetails(false);
+        }
+      }
+    } else {
+      setMediaTitle('');
+      setMediaCoverUrl(null);
+      setMediaId(null);
+      setTmdbMediaType(null);
+    }
+  };
+
   return (
     <View style={styles.root}>
       {/* Header */}
@@ -153,17 +187,9 @@ export default function LogSessionScreen({ route, navigation }) {
                 setMediaTitle(text);
                 setMediaCoverUrl(null);
                 setMediaId(null);
+                setTmdbMediaType(null);
               }}
-              onSelectMedia={(media) => {
-                if (media) {
-                  setMediaTitle(media.title);
-                  setMediaCoverUrl(media.coverUrl);
-                  setMediaId(media.id);
-                } else {
-                  setMediaCoverUrl(null);
-                  setMediaId(null);
-                }
-              }}
+              onSelectMedia={handleSelectMedia}
               searchType={getSearchType()}
               placeholder={getMediaPlaceholder()}
               icon={null} // Don't pass icon so it uses default Search icon
@@ -186,9 +212,12 @@ export default function LogSessionScreen({ route, navigation }) {
                         mediaId === item.id && mediaTitle === item.title && styles.libraryItemActive
                       ]}
                       onPress={() => {
-                        setMediaTitle(item.title);
-                        setMediaCoverUrl(item.coverUrl);
-                        setMediaId(item.id);
+                        handleSelectMedia({
+                          title: item.title,
+                          coverUrl: item.coverUrl,
+                          id: item.id,
+                          mediaType: item.tmdbMediaType
+                        });
                       }}
                     >
                       <View style={styles.libraryCoverWrapper}>

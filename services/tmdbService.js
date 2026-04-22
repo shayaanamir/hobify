@@ -53,6 +53,8 @@ export async function searchMoviesAndShows(query) {
         
         return {
           id: `tmdb_${item.id}`,
+          tmdbId: item.id,
+          mediaType: item.media_type, // 'movie' or 'tv'
           title,
           subtitle: item.media_type === 'movie' ? 'Movie' : 'TV Show',
           coverUrl,
@@ -65,7 +67,50 @@ export async function searchMoviesAndShows(query) {
       
   } catch (error) {
     console.error('Network error reaching TMDB:', error);
-    // Return empty array so the UI doesn't crash
     return [];
+  }
+}
+
+export async function getMediaDetails(tmdbId, mediaType) {
+  if (!tmdbId || !TMDB_API_KEY) return null;
+  
+  try {
+    const isBearerToken = TMDB_API_KEY.length > 50;
+    const url = isBearerToken 
+      ? `${BASE_URL}/${mediaType}/${tmdbId}`
+      : `${BASE_URL}/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'HobifyApp/1.0',
+    };
+
+    if (isBearerToken) {
+      headers['Authorization'] = `Bearer ${TMDB_API_KEY}`;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error(`TMDB Details Error: ${response.status}`);
+    
+    const data = await response.json();
+    
+    // Normalize runtime/duration
+    // Movies have 'runtime' (minutes)
+    // TV shows have 'episode_run_time' (array of minutes)
+    let runtime = 0;
+    if (mediaType === 'movie') {
+      runtime = data.runtime || 0;
+    } else if (mediaType === 'tv') {
+      runtime = data.episode_run_time?.[0] || 0;
+    }
+    
+    return {
+      ...data,
+      runtime
+    };
+  } catch (error) {
+    console.error('Error fetching TMDB details:', error);
+    return null;
   }
 }
