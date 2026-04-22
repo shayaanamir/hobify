@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, ActivityIndicator } from 'react-native';
 import { useSelector } from 'react-redux';
-import { ArrowLeft, Star, Clock, CheckCircle2, Calendar, Layout, User, BookOpen } from 'lucide-react-native';
+import { ArrowLeft, Star, Clock, CheckCircle2, Calendar, Layout, User, BookOpen, Plus } from 'lucide-react-native';
 import { SessionItem, IconRenderer } from '../components';
 import { getMediaDetails, searchMedia } from '../services/mediaSearchService';
 
@@ -15,6 +15,7 @@ export default function MediaDetailScreen({ route, navigation }) {
   );
 
   const sessions = useSelector((state) => state.sessions.items);
+  const allHobbies = useSelector((state) => state.hobbies.items);
   
   // Try to find tmdbMediaType and mediaId from sessions if not in params
   const sessionForMedia = sessions.find(s => s.mediaTitle === mediaTitle && s.hobbyId === hobbyId);
@@ -80,6 +81,51 @@ export default function MediaDetailScreen({ route, navigation }) {
     latestSession?.status ||
     'in-progress';
   const rating = mediaSessions.find((s) => s.rating)?.rating;
+
+  const getStatusLabel = () => {
+    if (status === 'completed') return 'Done';
+    const name = hobby?.name.toLowerCase() || '';
+    const isBook = name.includes('reading') || name.includes('book') || resolvedMediaId?.startsWith('ol_');
+    const isVideo = name.includes('movie') || name.includes('tv') || name.includes('show') || resolvedMediaId?.startsWith('tmdb_');
+    
+    if (isBook) return 'Reading';
+    if (isVideo) return 'Watching';
+    return 'Playing';
+  };
+
+  const handleLogPress = () => {
+    // Try to find a hobby that matches this media
+    let targetHobbyId = hobbyId;
+    const userHasHobby = allHobbies.find(h => h.id === hobbyId);
+    
+    if (!userHasHobby) {
+      const searchType = details?.media_type || (resolvedMediaId?.startsWith('igdb_') ? 'game' : resolvedMediaId?.startsWith('ol_') ? 'book' : 'movie');
+      const similarHobby = allHobbies.find(h => 
+        h.type === 'media' && (
+          (searchType === 'game' && h.name.toLowerCase().includes('game')) ||
+          (searchType === 'book' && (h.name.toLowerCase().includes('reading') || h.name.toLowerCase().includes('book'))) ||
+          (searchType === 'movie' && (h.name.toLowerCase().includes('movie') || h.name.toLowerCase().includes('film'))) ||
+          (searchType === 'tv' && (h.name.toLowerCase().includes('tv') || h.name.toLowerCase().includes('show')))
+        )
+      ) || allHobbies.find(h => h.type === 'media');
+      
+      targetHobbyId = similarHobby?.id;
+    }
+    
+    if (targetHobbyId) {
+      navigation.navigate('LogSession', {
+        hobbyId: targetHobbyId,
+        preSelectedMedia: {
+          id: resolvedMediaId,
+          title: mediaTitle,
+          coverUrl: coverUrl,
+          tmdbMediaType: resolvedTmdbMediaType
+        }
+      });
+    } else {
+      navigation.navigate('Add');
+    }
+  };
 
   const coverUrl = details?.cover?.image_id 
     ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${details.cover.image_id}.jpg`
@@ -155,6 +201,15 @@ export default function MediaDetailScreen({ route, navigation }) {
                   />
                 ))}
               </View>
+
+              <TouchableOpacity 
+                style={[styles.inlineLogButton, { backgroundColor: hobby?.color || '#111827' }]}
+                onPress={handleLogPress}
+                activeOpacity={0.8}
+              >
+                <Plus size={16} color="#FFFFFF" strokeWidth={3} />
+                <Text style={styles.inlineLogButtonText}>Log Activity</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -172,7 +227,7 @@ export default function MediaDetailScreen({ route, navigation }) {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <View style={[styles.statusIndicator, { backgroundColor: status === 'completed' ? '#10B981' : '#3B82F6' }]} />
-              <Text style={styles.statLabel}>{status === 'completed' ? 'Done' : 'Playing'}</Text>
+              <Text style={styles.statLabel}>{getStatusLabel()}</Text>
             </View>
           </View>
 
@@ -398,5 +453,25 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 14,
     paddingVertical: 20,
+  },
+  inlineLogButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inlineLogButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 6,
   },
 });

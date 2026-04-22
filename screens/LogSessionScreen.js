@@ -11,7 +11,7 @@ import { getMediaDetails } from '../services/mediaSearchService';
 
 
 export default function LogSessionScreen({ route, navigation }) {
-  const { hobbyId } = route.params || {};
+  const { hobbyId, preSelectedMedia } = route.params || {};
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
 
@@ -55,13 +55,19 @@ export default function LogSessionScreen({ route, navigation }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Media specific state
-  const [mediaTitle, setMediaTitle] = useState('');
-  const [mediaCoverUrl, setMediaCoverUrl] = useState(null);
-  const [mediaId, setMediaId] = useState(null);
-  const [tmdbMediaType, setTmdbMediaType] = useState(null);
+  const [mediaTitle, setMediaTitle] = useState(preSelectedMedia?.title || '');
+  const [mediaCoverUrl, setMediaCoverUrl] = useState(preSelectedMedia?.coverUrl || null);
+  const [mediaId, setMediaId] = useState(preSelectedMedia?.id || null);
+  const [tmdbMediaType, setTmdbMediaType] = useState(preSelectedMedia?.tmdbMediaType || null);
   const [rating, setRating] = useState(undefined);
   const [status, setStatus] = useState('in-progress');
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  React.useEffect(() => {
+    if (preSelectedMedia?.id && String(preSelectedMedia.id).startsWith('tmdb_')) {
+      handleSelectMedia(preSelectedMedia);
+    }
+  }, []);
 
   if (!hobby) return null;
 
