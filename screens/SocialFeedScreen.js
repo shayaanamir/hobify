@@ -10,7 +10,7 @@ import { fetchPosts, fetchPostsByUserIds, selectAllPosts, selectFollowingPosts }
 import { fetchFollowing, selectFollowing } from '../slices/followsSlice';
 import { selectUser } from '../slices/authSlice';
 
-const HOBBY_CATEGORIES = ['All', 'Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Media', 'Other'];
+import { selectHobbies } from '../slices/hobbiesSlice';
 
 export default function SocialFeedScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -19,8 +19,10 @@ export default function SocialFeedScreen({ navigation }) {
   const followingPosts = useSelector(selectFollowingPosts);
   const following = useSelector(selectFollowing);
 
+  const userHobbies = useSelector(state => state.hobbies.items);
+
   const [activeTab, setActiveTab] = useState('forYou'); // 'forYou' | 'following'
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeHobbyId, setActiveHobbyId] = useState('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -52,10 +54,20 @@ export default function SocialFeedScreen({ navigation }) {
     const sorted = [...basePosts].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-    if (activeCategory === 'All') return sorted;
-    // Only show posts that have a matching hobbyCategory
-    return sorted.filter(p => p.hobbyCategory === activeCategory);
-  }, [basePosts, activeCategory]);
+    if (activeHobbyId === 'All') return sorted;
+    if (activeHobbyId === 'Other') {
+      const myHobbyNames = userHobbies.map(h => h.name.toLowerCase());
+      return sorted.filter(p => {
+        if (!p.hobbyName) return true;
+        return !myHobbyNames.includes(p.hobbyName.toLowerCase());
+      });
+    }
+    const selectedHobby = userHobbies.find(h => h.id === activeHobbyId);
+    if (selectedHobby) {
+      return sorted.filter(p => p.hobbyName?.toLowerCase() === selectedHobby.name.toLowerCase());
+    }
+    return sorted.filter(p => p.hobbyId === activeHobbyId);
+  }, [basePosts, activeHobbyId, userHobbies]);
 
   return (
     <View style={styles.root}>
@@ -100,20 +112,42 @@ export default function SocialFeedScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Hobby Category Filter */}
+        {/* Hobby Filter */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}
         >
-          {HOBBY_CATEGORIES.map(cat => (
+          <TouchableOpacity
+            onPress={() => setActiveHobbyId('All')}
+            style={[styles.filterPill, activeHobbyId === 'All' && styles.filterPillActive]}
+          >
+            <Text style={[styles.filterPillText, activeHobbyId === 'All' && styles.filterPillTextActive]}>
+              All
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveHobbyId('Other')}
+            style={[styles.filterPill, activeHobbyId === 'Other' && styles.filterPillActive]}
+          >
+            <Text style={[styles.filterPillText, activeHobbyId === 'Other' && styles.filterPillTextActive]}>
+              Other
+            </Text>
+          </TouchableOpacity>
+          {userHobbies.map(hb => (
             <TouchableOpacity
-              key={cat}
-              onPress={() => setActiveCategory(cat)}
-              style={[styles.filterPill, activeCategory === cat && styles.filterPillActive]}
+              key={hb.id}
+              onPress={() => setActiveHobbyId(hb.id)}
+              style={[
+                styles.filterPill, 
+                activeHobbyId === hb.id && { backgroundColor: `${hb.color}20`, borderColor: hb.color }
+              ]}
             >
-              <Text style={[styles.filterPillText, activeCategory === cat && styles.filterPillTextActive]}>
-                {cat}
+              <Text style={[
+                styles.filterPillText, 
+                activeHobbyId === hb.id && { color: hb.color, fontWeight: '700' }
+              ]}>
+                {hb.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -135,7 +169,7 @@ export default function SocialFeedScreen({ navigation }) {
               <Text style={styles.emptySubtitle}>
                 {activeTab === 'following'
                   ? 'The people you follow haven\'t posted yet.'
-                  : 'No posts match this category yet.'
+                  : 'No posts match this hobby yet.'
                 }
               </Text>
             </View>
