@@ -61,13 +61,14 @@ export const fetchPostsByUser = createAsyncThunk(
 /** Add a new post */
 export const addPostAsync = createAsyncThunk(
   'posts/addPostAsync',
-  async ({ userId, userName, userAvatar, post }, { rejectWithValue }) => {
+  async ({ userId, userName, userAvatar, userAvatarUrl, post }, { rejectWithValue }) => {
     try {
       const newPost = {
         ...post,
         userId,
         userName,
         userAvatar,
+        userAvatarUrl: userAvatarUrl || null,
         likes: 0,
         likedBy: [],
         commentCount: 0,

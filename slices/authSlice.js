@@ -56,7 +56,7 @@ export const restoreSession = createAsyncThunk(
         uid: firebaseUser.uid,
         name: firebaseUser.displayName || 'User',
         email: firebaseUser.email,
-        avatar: '😊',
+        avatarUrl: null,
       };
     } catch (err) {
       return rejectWithValue(err.message);

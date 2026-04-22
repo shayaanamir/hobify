@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -10,12 +10,32 @@ function timeAgo(dateStr) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+// ─── Comment Author Avatar ────────────────────────────────────────────────────
+// Priority: network photo → initials
+function CommentAvatar({ comment }) {
+  if (comment.userAvatarUrl) {
+    return <Image source={{ uri: comment.userAvatarUrl }} style={styles.avatarImage} />;
+  }
+
+  const initials = (comment.userName || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <View style={styles.avatarPlaceholder}>
+      <Text style={styles.avatarInitials}>{initials}</Text>
+    </View>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export function CommentItem({ comment }) {
   return (
     <View style={styles.row}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarEmoji}>{comment.userAvatar}</Text>
-      </View>
+      <CommentAvatar comment={comment} />
       <View style={styles.bubble}>
         <View style={styles.bubbleHeader}>
           <Text style={styles.userName}>{comment.userName}</Text>
@@ -27,6 +47,7 @@ export function CommentItem({ comment }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -34,16 +55,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 10,
   },
-  avatar: {
+  avatarImage: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    flexShrink: 0,
+  },
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  avatarEmoji: { fontSize: 14 },
+  avatarInitials: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
   bubble: {
     flex: 1,
     backgroundColor: '#F9FAFB',
@@ -56,18 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 3,
   },
-  userName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  time: {
-    fontSize: 10,
-    color: '#9CA3AF',
-  },
-  content: {
-    fontSize: 13,
-    color: '#374151',
-    lineHeight: 18,
-  },
+  userName: { fontSize: 12, fontWeight: '600', color: '#111827' },
+  time: { fontSize: 10, color: '#9CA3AF' },
+  content: { fontSize: 13, color: '#374151', lineHeight: 18 },
 });

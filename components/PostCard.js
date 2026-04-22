@@ -20,46 +20,63 @@ function timeAgo(dateStr) {
   if (mins < 60) return `${Math.max(0, mins)}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
+// ─── Post Author Avatar ───────────────────────────────────────────────────────
+// Priority: network photo → initials
+function PostAvatar({ post, hobby }) {
+  if (post.userAvatarUrl) {
+    return <Image source={{ uri: post.userAvatarUrl }} style={styles.avatarImg} />;
+  }
+
+  const initials = (post.userName || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <View style={[styles.avatar, { backgroundColor: hobby ? `${hobby.color}20` : '#F3F4F6' }]}>
+      <Text style={styles.avatarInitials}>{initials}</Text>
+    </View>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export function PostCard({ post }) {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const hobbies = useSelector(state => state.hobbies.items);
+  const hobbies = useSelector((state) => state.hobbies.items);
 
-  const hobby = post.hobbyId ? hobbies.find(h => h.id === post.hobbyId) : null;
+  const hobby = post.hobbyId ? hobbies.find((h) => h.id === post.hobbyId) : null;
   const typeConfig = TYPE_CONFIG[post.type] || TYPE_CONFIG.progress;
   const isLikedByMe = post.likedBy?.includes(user?.uid) || false;
 
-  const handleTap = () => {
-    navigation.navigate('PostDetail', { postId: post.id });
-  };
+  const handleTap = () => navigation.navigate('PostDetail', { postId: post.id });
 
   const handleAuthorTap = () => {
-    // Don't navigate if this is the current user's own post
     if (post.userId && post.userId !== user?.uid) {
       navigation.navigate('UserProfile', { userId: post.userId });
     }
   };
 
   const handleLike = () => {
-    dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }));
+    dispatch(toggleLikePostAsync({
+      postId: post.id,
+      userId: user?.uid,
+      isCurrentlyLiked: isLikedByMe,
+    }));
   };
 
   return (
     <TouchableOpacity onPress={handleTap} style={styles.card} activeOpacity={0.9}>
+      {/* Header */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={handleAuthorTap} style={styles.authorTap}>
-          {post.userAvatarUrl ? (
-            <Image source={{ uri: post.userAvatarUrl }} style={styles.avatarImg} />
-          ) : (
-            <View style={[styles.avatar, { backgroundColor: hobby ? `${hobby.color}20` : '#F3F4F6' }]}>
-              <Text style={styles.avatarText}>{post.userAvatar || '😊'}</Text>
-            </View>
-          )}
+          <PostAvatar post={post} hobby={hobby} />
           <View style={styles.headerInfo}>
             <Text style={styles.userName} numberOfLines={1}>{post.userName}</Text>
             <Text style={styles.timeAgo}>{timeAgo(post.createdAt)}</Text>
@@ -73,15 +90,18 @@ export function PostCard({ post }) {
         </View>
       </View>
 
+      {/* Hobby pill */}
       {hobby && (
-        <View style={[styles.hobbyPill, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+        <View style={[
+          styles.hobbyPill,
+          { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 },
+        ]}>
           <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
-          <Text style={[styles.hobbyPillText, { color: hobby.color }]}>
-            {hobby.name}
-          </Text>
+          <Text style={[styles.hobbyPillText, { color: hobby.color }]}>{hobby.name}</Text>
         </View>
       )}
 
+      {/* Content */}
       <Text style={styles.postTitle}>{post.title}</Text>
       <Text style={styles.postContent} numberOfLines={3}>{post.content}</Text>
 
@@ -91,10 +111,17 @@ export function PostCard({ post }) {
         </View>
       ) : null}
 
+      {/* Footer */}
       <View style={styles.footerRow}>
         <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
-          <Heart size={18} color={isLikedByMe ? '#EF4444' : '#9CA3AF'} fill={isLikedByMe ? '#EF4444' : 'transparent'} />
-          <Text style={[styles.actionText, isLikedByMe && styles.actionTextLiked]}>{post.likes}</Text>
+          <Heart
+            size={18}
+            color={isLikedByMe ? '#EF4444' : '#9CA3AF'}
+            fill={isLikedByMe ? '#EF4444' : 'transparent'}
+          />
+          <Text style={[styles.actionText, isLikedByMe && styles.actionTextLiked]}>
+            {post.likes}
+          </Text>
         </TouchableOpacity>
         <View style={styles.actionButton}>
           <MessageCircle size={18} color="#9CA3AF" />
@@ -105,6 +132,7 @@ export function PostCard({ post }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
@@ -142,21 +170,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: {
-    fontSize: 16,
+  avatarInitials: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6B7280',
   },
-  headerInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  timeAgo: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
+  headerInfo: { flex: 1 },
+  userName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  timeAgo: { fontSize: 12, color: '#9CA3AF' },
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -165,10 +186,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 9999,
   },
-  typeBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
+  typeBadgeText: { fontSize: 10, fontWeight: '600' },
   hobbyPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
@@ -176,32 +194,11 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     marginBottom: 8,
   },
-  hobbyPillText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  postTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  postContent: {
-    fontSize: 14,
-    color: '#4B5563',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  imageContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  postImage: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'cover',
-  },
+  hobbyPillText: { fontSize: 12, fontWeight: '600' },
+  postTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  postContent: { fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 12 },
+  imageContainer: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
+  postImage: { width: '100%', height: 180, resizeMode: 'cover' },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,17 +207,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     gap: 16,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#9CA3AF',
-  },
-  actionTextLiked: {
-    color: '#EF4444',
-  },
+  actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  actionText: { fontSize: 14, fontWeight: '500', color: '#9CA3AF' },
+  actionTextLiked: { color: '#EF4444' },
 });

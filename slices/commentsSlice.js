@@ -30,7 +30,8 @@ export const addCommentAsync = createAsyncThunk(
         postId,
         userId: user.uid,
         userName: user.name,
-        userAvatar: user.avatar || '😊',
+        userAvatar: user.avatar || null,
+        userAvatarUrl: user.avatarUrl || null,
         content,
         createdAt: new Date().toISOString(),
       };
