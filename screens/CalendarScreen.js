@@ -100,9 +100,22 @@ export default function CalendarScreen() {
     return map;
   }, [plannedActivities]);
 
-  const daySessions = sessions
-    .filter((s) => isSameDay(new Date(s.date), selectedDate))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const groupedSessions = useMemo(() => {
+    const ds = sessions.filter((s) => isSameDay(new Date(s.date), selectedDate))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const groups = {};
+    ds.forEach(s => {
+      if (!groups[s.hobbyId]) {
+        groups[s.hobbyId] = {
+          hobby: hobbies.find(h => h.id === s.hobbyId),
+          items: []
+        };
+      }
+      groups[s.hobbyId].items.push(s);
+    });
+    return Object.values(groups).filter(g => g.hobby);
+  }, [sessions, hobbies, selectedDate]);
 
   const dayPlanned = plannedActivities.filter((a) =>
     isSameDay(new Date(a.date), selectedDate)
@@ -347,33 +360,46 @@ export default function CalendarScreen() {
           )}
 
           {/* Completed Sessions */}
-          {daySessions.length > 0 && (
+          {groupedSessions.length > 0 && (
             <View style={styles.listSection}>
               <Text style={styles.listHeader}>Completed</Text>
               <View style={styles.listContainer}>
-                {daySessions.map((session) => {
-                  const hobby = hobbies.find((h) => h.id === session.hobbyId);
-                  if (!hobby) return null;
-                  return (
-                    <View key={session.id} style={styles.completedCard}>
-                      <View style={[styles.completedIconWrap, { backgroundColor: `${hobby.color}15` }]}>
-                        <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />
+                {groupedSessions.map((group) => (
+                  <View key={group.hobby.id} style={styles.hobbyGroupCard}>
+                    <View style={styles.hobbyGroupHeader}>
+                      <View style={[styles.completedIconWrap, { backgroundColor: `${group.hobby.color}15` }]}>
+                        <IconRenderer iconName={group.hobby.icon} size={14} color={group.hobby.color} />
                       </View>
-                      <View style={styles.completedContent}>
-                        <Text style={styles.completedTitle} numberOfLines={1}>
-                          {session.mediaTitle || hobby.name}
+                      <Text style={styles.hobbyGroupTitle}>{group.hobby.name}</Text>
+                      <View style={styles.hobbyGroupBadge}>
+                        <Text style={styles.hobbyGroupBadgeText}>
+                          {group.items.length} {group.items.length === 1 ? 'session' : 'sessions'}
                         </Text>
-                        {session.notes ? (
-                          <Text style={styles.completedNotes} numberOfLines={1}>{session.notes}</Text>
-                        ) : null}
-                      </View>
-                      <View style={styles.completedMeta}>
-                        <Clock size={12} color="#9CA3AF" />
-                        <Text style={styles.completedDuration}>{formatDuration(session.duration)}</Text>
                       </View>
                     </View>
-                  );
-                })}
+                    
+                    <View style={styles.sessionList}>
+                      {group.items.map((session, idx) => (
+                        <View key={session.id} style={[
+                          styles.sessionRow,
+                          idx === group.items.length - 1 ? null : styles.sessionRowBorder
+                        ]}>
+                          <View style={styles.sessionInfo}>
+                            <Text style={styles.sessionTitle} numberOfLines={1}>
+                              {session.mediaTitle || 'Activity Session'}
+                            </Text>
+                            {session.notes ? (
+                              <Text style={styles.sessionNotes} numberOfLines={1}>{session.notes}</Text>
+                            ) : null}
+                          </View>
+                          <View style={styles.sessionMeta}>
+                            <Text style={styles.sessionDuration}>{formatDuration(session.duration)}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ))}
               </View>
             </View>
           )}
@@ -427,7 +453,7 @@ export default function CalendarScreen() {
           )}
 
           {/* Empty State */}
-          {(daySessions.length === 0 && dayPlanned.length === 0 && !showPlanForm) && (
+          {(groupedSessions.length === 0 && dayPlanned.length === 0 && !showPlanForm) && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>📅</Text>
               <Text style={styles.emptyText}>Nothing here yet</Text>
@@ -746,6 +772,74 @@ const styles = StyleSheet.create({
   },
   completedDuration: {
     fontSize: 12,
+    color: '#9CA3AF',
+  },
+  
+  // Hobby Grouping
+  hobbyGroupCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: 8,
+  },
+  hobbyGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  hobbyGroupTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+  },
+  hobbyGroupBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 9999,
+  },
+  hobbyGroupBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  sessionList: {
+    paddingLeft: 4,
+  },
+  sessionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  sessionRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  sessionInfo: {
+    flex: 1,
+  },
+  sessionTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  sessionNotes: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  sessionMeta: {
+    alignItems: 'flex-end',
+  },
+  sessionDuration: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#9CA3AF',
   },
   plannedCard: {
