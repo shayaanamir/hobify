@@ -12,11 +12,26 @@ import {
   followUserAsync, unfollowUserAsync,
   selectIsFollowing,
 } from '../slices/followsSlice';
-import {
-  fetchPostsByUser, selectUserPosts,
-} from '../slices/postsSlice';
+import { fetchPostsByUser, selectUserPosts } from '../slices/postsSlice';
 import { PostCard } from '../components';
 
+// ─── Initials Avatar ──────────────────────────────────────────────────────────
+function InitialsAvatar({ name, size = 88 }) {
+  const initials = (name || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <View style={[styles.initialsAvatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={[styles.initialsText, { fontSize: size * 0.36 }]}>{initials}</Text>
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 export default function UserProfileScreen({ route, navigation }) {
   const dispatch = useDispatch();
   const { userId } = route.params;
@@ -60,10 +75,10 @@ export default function UserProfileScreen({ route, navigation }) {
     setFollowLoading(true);
     if (isFollowing) {
       await dispatch(unfollowUserAsync({ followerId: currentUser.uid, followingId: userId }));
-      setFollowerCount(c => Math.max(0, c - 1));
+      setFollowerCount((c) => Math.max(0, c - 1));
     } else {
       await dispatch(followUserAsync({ followerId: currentUser.uid, followingId: userId }));
-      setFollowerCount(c => c + 1);
+      setFollowerCount((c) => c + 1);
     }
     setFollowLoading(false);
   };
@@ -78,25 +93,31 @@ export default function UserProfileScreen({ route, navigation }) {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+          >
             <ArrowLeft size={22} color="#111827" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{profile?.name || 'Profile'}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {profile?.name || 'Profile'}
+          </Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          {/* Avatar */}
+          {/* Avatar — real photo or initials fallback */}
           {profile?.avatarUrl ? (
             <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarEmoji}>{profile?.avatar || '😊'}</Text>
-            </View>
+            <InitialsAvatar name={profile?.name} size={88} />
           )}
 
           <Text style={styles.name}>{profile?.name}</Text>
@@ -129,20 +150,22 @@ export default function UserProfileScreen({ route, navigation }) {
               disabled={followLoading}
               style={[styles.followBtn, isFollowing && styles.followingBtn]}
             >
-              {followLoading
-                ? <ActivityIndicator size="small" color={isFollowing ? '#111827' : '#FFFFFF'} />
-                : (
-                  <>
-                    {isFollowing
-                      ? <UserCheck size={16} color="#111827" />
-                      : <UserPlus size={16} color="#FFFFFF" />
-                    }
-                    <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-                      {isFollowing ? 'Following' : 'Follow'}
-                    </Text>
-                  </>
-                )
-              }
+              {followLoading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={isFollowing ? '#111827' : '#FFFFFF'}
+                />
+              ) : (
+                <>
+                  {isFollowing
+                    ? <UserCheck size={16} color="#111827" />
+                    : <UserPlus size={16} color="#FFFFFF" />
+                  }
+                  <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -155,7 +178,7 @@ export default function UserProfileScreen({ route, navigation }) {
               <Text style={styles.emptyText}>No posts yet</Text>
             </View>
           ) : (
-            userPosts.map(post => (
+            userPosts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))
           )}
@@ -165,10 +188,17 @@ export default function UserProfileScreen({ route, navigation }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FAF8F5' },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAF8F5' },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAF8F5',
+  },
   scroll: { paddingBottom: 100 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,10 +212,15 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827', flex: 1, textAlign: 'center' },
+  headerTitle: {
+    fontSize: 17, fontWeight: '700', color: '#111827',
+    flex: 1, textAlign: 'center',
+  },
+
   profileCard: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
@@ -195,24 +230,27 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
   avatar: {
     width: 88, height: 88, borderRadius: 44,
     borderWidth: 3, borderColor: '#F3F4F6',
     marginBottom: 12,
   },
-  avatarPlaceholder: {
-    width: 88, height: 88, borderRadius: 44,
-    backgroundColor: '#F3F4F6',
+  initialsAvatar: {
+    backgroundColor: '#E5E7EB',
     alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: '#F3F4F6',
     marginBottom: 12,
   },
-  avatarEmoji: { fontSize: 36 },
+  initialsText: { fontWeight: '700', color: '#6B7280' },
+
   name: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  bio: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20, marginBottom: 16 },
+  bio: {
+    fontSize: 14, color: '#6B7280',
+    textAlign: 'center', lineHeight: 20, marginBottom: 16,
+  },
+
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -225,26 +263,26 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  statLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+  statLabel: {
+    fontSize: 11, color: '#9CA3AF', fontWeight: '600',
+    marginTop: 2, textTransform: 'uppercase',
+  },
   statDivider: { width: 1, height: 32, backgroundColor: '#F3F4F6' },
+
   followBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#111827',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+    paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 9999,
-    minWidth: 120,
-    justifyContent: 'center',
+    minWidth: 120, justifyContent: 'center',
   },
   followingBtn: {
     backgroundColor: '#F3F4F6',
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderWidth: 1.5, borderColor: '#E5E7EB',
   },
   followBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   followingBtnText: { color: '#111827' },
+
   postsSection: { paddingHorizontal: 20 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
   emptyState: { alignItems: 'center', paddingVertical: 32 },

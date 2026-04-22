@@ -1,11 +1,31 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Image } from 'react-native';
-import { User, Settings, Bell, Download, Info, ChevronRight, LogOut, Pencil } from 'lucide-react-native';
+import {
+  View, Text, StyleSheet, ScrollView, Platform,
+  TouchableOpacity, Image,
+} from 'react-native';
+import { Settings, Bell, Download, Info, ChevronRight, LogOut, Pencil } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { signOutThunk, selectUser } from '../slices/authSlice';
 import { fetchFollowing, fetchFollowers, selectFollowing, selectFollowers } from '../slices/followsSlice';
 import { formatDuration } from '../utils/formatDuration';
 
+// ─── Initials Avatar ──────────────────────────────────────────────────────────
+function InitialsAvatar({ name, size = 80 }) {
+  const initials = (name || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <View style={[styles.initialsAvatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={[styles.initialsText, { fontSize: size * 0.36 }]}>{initials}</Text>
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
@@ -32,8 +52,11 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Page Header */}
         <View style={styles.pageHeader}>
           <Text style={styles.headerTitle}>Profile</Text>
           <TouchableOpacity
@@ -51,11 +74,10 @@ export default function ProfileScreen({ navigation }) {
             {user?.avatarUrl ? (
               <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
             ) : (
-              <View style={styles.avatarWrapper}>
-                <User size={40} color="#9CA3AF" />
-              </View>
+              <InitialsAvatar name={user?.name} size={80} />
             )}
           </TouchableOpacity>
+
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.name || 'Hobbyist'}</Text>
             {user?.bio ? (
@@ -66,7 +88,7 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Social Stats (followers / following) */}
+        {/* Social Stats */}
         <View style={styles.socialStats}>
           <View style={styles.socialStat}>
             <Text style={styles.socialStatVal}>{followers.length}</Text>
@@ -105,7 +127,7 @@ export default function ProfileScreen({ navigation }) {
                 key={index}
                 style={[
                   styles.settingsRow,
-                  index < SETTINGS_OPTS.length - 1 && styles.settingsRowBorder
+                  index < SETTINGS_OPTS.length - 1 && styles.settingsRowBorder,
                 ]}
               >
                 <View style={styles.settingsRowLeft}>
@@ -137,6 +159,7 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff6e8ff' },
   scrollContent: {
@@ -144,6 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 120,
   },
+
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -172,17 +196,29 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatarImage: {
-    width: 80, height: 80, borderRadius: 40,
-    borderWidth: 3, borderColor: '#FFFFFF',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
-  avatarWrapper: {
-    width: 80, height: 80, borderRadius: 40,
+  initialsAvatar: {
     backgroundColor: '#E5E7EB',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: '#FFFFFF',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
+  initialsText: { fontWeight: '700', color: '#6B7280' },
   userInfo: { flex: 1 },
   userName: { fontSize: 20, fontWeight: '700', color: '#111827' },
   userBio: { fontSize: 13, color: '#6B7280', marginTop: 4, lineHeight: 18 },
@@ -195,29 +231,57 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   socialStat: { flex: 1, alignItems: 'center' },
   socialStatVal: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  socialStatLabel: { fontSize: 11, fontWeight: '600', color: '#9CA3AF', marginTop: 2, textTransform: 'uppercase' },
+  socialStatLabel: {
+    fontSize: 11, fontWeight: '600', color: '#9CA3AF',
+    marginTop: 2, textTransform: 'uppercase',
+  },
   socialStatDivider: { width: 1, backgroundColor: '#F3F4F6' },
 
   // Activity stats
   statsGrid: { flexDirection: 'row', gap: 16, marginBottom: 32 },
   statCard: {
-    flex: 1, backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
   statVal: { fontSize: 24, fontWeight: '700', color: '#111827' },
-  statLabel: { fontSize: 10, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', marginTop: 4 },
+  statLabel: {
+    fontSize: 10, fontWeight: '700', color: '#9CA3AF',
+    textTransform: 'uppercase', marginTop: 4,
+  },
 
   // Settings
   settingsCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  settingsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
   settingsRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F9FAFB' },
   settingsRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   settingsIconWrapper: { padding: 8, backgroundColor: '#F3F4F6', borderRadius: 8 },
@@ -226,8 +290,15 @@ const styles = StyleSheet.create({
   versionWrapper: { marginTop: 32, alignItems: 'center', marginBottom: 16 },
   versionText: { fontSize: 12, color: '#9CA3AF' },
   logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderWidth: 1.5, borderColor: '#FCA5A5', borderRadius: 16, paddingVertical: 14, marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
+    borderRadius: 16,
+    paddingVertical: 14,
+    marginBottom: 8,
   },
   logoutBtnText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },
 });

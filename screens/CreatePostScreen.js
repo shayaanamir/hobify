@@ -1,249 +1,261 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Platform, TextInput, KeyboardAvoidingView
+  TextInput, Platform, ActivityIndicator, Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { X } from 'lucide-react-native';
-import { IconRenderer } from '../components';
-import { addPostAsync } from '../slices/postsSlice';
-import { selectUser } from '../slices/authSlice';
+import { X, Check } from 'lucide-react-native';
+import { selectUser, updateProfileAsync } from '../slices/authSlice';
 
-const POST_TYPES = [
-  { id: 'progress', label: 'Progress', emoji: '📈' },
-  { id: 'achievement', label: 'Achievement', emoji: '🏆' },
-  { id: 'milestone', label: 'Milestone', emoji: '🎯' },
-  { id: 'question', label: 'Question', emoji: '❓' },
+const AVATAR_OPTIONS = [
+  { emoji: '😊', bg: '#FEF3C7' },
+  { emoji: '🧑‍💻', bg: '#DBEAFE' },
+  { emoji: '🎨', bg: '#F3E8FF' },
+  { emoji: '🎸', bg: '#FEE2E2' },
+  { emoji: '📚', bg: '#D1FAE5' },
+  { emoji: '🏃', bg: '#FFF7ED' },
+  { emoji: '🍳', bg: '#FEF9C3' },
+  { emoji: '🎹', bg: '#EDE9FE' },
+  { emoji: '📷', bg: '#E0F2FE' },
+  { emoji: '🧘', bg: '#FCE7F3' },
+  { emoji: '🚴', bg: '#ECFDF5' },
+  { emoji: '✍️', bg: '#FFF1F2' },
+  { emoji: '🎤', bg: '#F0FDF4' },
+  { emoji: '🧩', bg: '#FDF4FF' },
+  { emoji: '🌿', bg: '#D1FAE5' },
+  { emoji: '⚡', bg: '#FEF08A' },
 ];
 
-export default function CreatePostScreen({ navigation }) {
+export default function EditProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const hobbies = useSelector((state) => state.hobbies.items);
 
-  const [postTitle, setPostTitle] = useState('');
-  const [postContent, setPostContent] = useState('');
-  const [postType, setPostType] = useState(POST_TYPES[0].id);
-  const [postHobbyId, setPostHobbyId] = useState('');
+  const [name, setName] = useState(user?.name || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [selectedAvatar, setSelectedAvatar] = useState(
+    user?.avatar || AVATAR_OPTIONS[0].emoji
+  );
+  const [saving, setSaving] = useState(false);
 
-  const handlePostSubmit = () => {
-    if (!postTitle.trim() || !postContent.trim() || !user) return;
+  const currentBg = AVATAR_OPTIONS.find(a => a.emoji === selectedAvatar)?.bg || '#F3F4F6';
 
-    const selectedHobby = hobbies.find(h => h.id === postHobbyId);
-
-    dispatch(addPostAsync({
-      userId: user.uid,
-      userName: user.name,
-      userAvatar: user.avatar,
-      userAvatarUrl: user.avatarUrl || null,
-      post: {
-        title: postTitle.trim(),
-        content: postContent.trim(),
-        type: postType,
-        hobbyId: postHobbyId || null,
-        hobbyCategory: selectedHobby?.category || null,
-      }
-    }));
-
-    navigation.goBack();
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Name required', 'Please enter a display name.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await dispatch(updateProfileAsync({
+        uid: user.uid,
+        updates: {
+          name: name.trim(),
+          bio: bio.trim(),
+          avatar: selectedAvatar,
+        },
+      }));
+      navigation.goBack();
+    } catch (err) {
+      Alert.alert('Error', err?.message || 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <View style={styles.root}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.root}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-            <X size={24} color="#6B7280" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+            <X size={22} color="#6B7280" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Post</Text>
-          <View style={{ width: 32 }} />
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={saving}
+            style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+          >
+            {saving
+              ? <ActivityIndicator size="small" color="#FFFFFF" />
+              : <Text style={styles.saveBtnText}>Save</Text>
+            }
+          </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-          <Text style={styles.inputLabel}>Title</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="What's on your mind?"
-            placeholderTextColor="#9CA3AF"
-            value={postTitle}
-            onChangeText={setPostTitle}
-          />
-
-          <Text style={styles.inputLabel}>Details</Text>
-          <TextInput
-            style={[styles.textInput, styles.textArea]}
-            placeholder="Share more details about your progress..."
-            placeholderTextColor="#9CA3AF"
-            value={postContent}
-            onChangeText={setPostContent}
-            multiline
-            textAlignVertical="top"
-          />
-
-          <Text style={styles.inputLabel}>Post Type</Text>
-          <View style={styles.typeSelectorRow}>
-            {POST_TYPES.map(type => (
-              <TouchableOpacity
-                key={type.id}
-                style={[styles.typeSelectorBtn, postType === type.id && styles.typeSelectorBtnActive]}
-                onPress={() => setPostType(type.id)}
-              >
-                <Text style={[styles.typeSelectorEmoji, postType === type.id && styles.typeSelectorEmojiActive]}>{type.emoji}</Text>
-                <Text style={[styles.typeSelectorText, postType === type.id && styles.typeSelectorTextActive]}>{type.label}</Text>
-              </TouchableOpacity>
-            ))}
+        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+          {/* Avatar Preview */}
+          <View style={styles.avatarSection}>
+            <View style={[styles.avatarPreview, { backgroundColor: currentBg }]}>
+              <Text style={styles.avatarPreviewEmoji}>{selectedAvatar}</Text>
+            </View>
+            <Text style={styles.avatarHint}>Choose your avatar</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Tag a Hobby (Optional)</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hobbyRow}>
-            <TouchableOpacity
-              style={[styles.hobbyPill, postHobbyId === '' && styles.hobbyPillActive]}
-              onPress={() => setPostHobbyId('')}
-            >
-              <Text style={[styles.hobbyPillText, postHobbyId === '' && styles.hobbyPillTextActive]}>None</Text>
-            </TouchableOpacity>
-            {hobbies.map(hobby => (
-              <TouchableOpacity
-                key={hobby.id}
-                onPress={() => setPostHobbyId(hobby.id)}
-              >
-                <View style={[
-                  styles.hobbyPill,
-                  postHobbyId === hobby.id && { backgroundColor: `${hobby.color}15`, borderColor: hobby.color, flexDirection: 'row', alignItems: 'center', gap: 4 }
-                ]}>
-                  {postHobbyId === hobby.id && <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />}
-                  <Text style={[styles.hobbyPillText, postHobbyId === hobby.id && { color: hobby.color, fontWeight: '700' }]}>
-                    {hobby.name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {/* Avatar Grid */}
+          <View style={styles.avatarGrid}>
+            {AVATAR_OPTIONS.map((opt) => {
+              const isSelected = selectedAvatar === opt.emoji;
+              return (
+                <TouchableOpacity
+                  key={opt.emoji}
+                  onPress={() => setSelectedAvatar(opt.emoji)}
+                  style={[
+                    styles.avatarOption,
+                    { backgroundColor: opt.bg },
+                    isSelected && styles.avatarOptionSelected,
+                  ]}
+                >
+                  <Text style={styles.avatarOptionEmoji}>{opt.emoji}</Text>
+                  {isSelected && (
+                    <View style={styles.selectedBadge}>
+                      <Check size={8} color="#FFFFFF" strokeWidth={3} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-          <View style={{ height: 40 }} />
+          {/* Name */}
+          <Text style={styles.label}>Display Name</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="words"
+          />
+
+          {/* Bio */}
+          <Text style={styles.label}>Bio</Text>
+          <TextInput
+            style={[styles.input, styles.bioInput]}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Tell the community about yourself and your hobbies..."
+            placeholderTextColor="#9CA3AF"
+            multiline
+            textAlignVertical="top"
+            maxLength={160}
+          />
+          <Text style={styles.charCount}>{bio.length}/160</Text>
         </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[
-              styles.bottomPostBtn,
-              (!postTitle.trim() || !postContent.trim()) && styles.bottomPostBtnDisabled
-            ]}
-            onPress={handlePostSubmit}
-            disabled={!postTitle.trim() || !postContent.trim()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.bottomPostBtnText}>Post to Community</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  root: { flex: 1, backgroundColor: '#FAF8F5' },
   header: {
-    marginTop: 25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 60 : 16,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 32,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
-  },
-  closeBtn: { padding: 4 },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    flex: 1,
-    textAlign: 'center',
-  },
-  body: { flex: 1, padding: 20 },
-  footer: {
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
     backgroundColor: '#FFFFFF',
   },
-  bottomPostBtn: {
+  headerBtn: { padding: 4 },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  saveBtn: {
     backgroundColor: '#111827',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 9999,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  saveBtnDisabled: { backgroundColor: '#9CA3AF' },
+  saveBtnText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  body: { padding: 24, paddingBottom: 60 },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatarPreview: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  avatarPreviewEmoji: { fontSize: 42 },
+  avatarHint: { fontSize: 13, color: '#9CA3AF' },
+  avatarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
+  avatarOption: {
+    width: 56,
     height: 56,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
-  bottomPostBtnDisabled: {
-    backgroundColor: '#E5E7EB',
-  },
-  bottomPostBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  inputLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8, marginTop: 16 },
-  textInput: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: '#111827',
-  },
-  textArea: { height: 120 },
-  typeSelectorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  typeSelectorBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-    gap: 6,
-  },
-  typeSelectorBtnActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#6366F1',
-  },
-  typeSelectorEmoji: { fontSize: 14, opacity: 0.8 },
-  typeSelectorEmojiActive: { opacity: 1 },
-  typeSelectorText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  typeSelectorTextActive: { color: '#6366F1', fontWeight: '700' },
-  hobbyRow: {
-    gap: 10,
-    paddingBottom: 20,
-  },
-  hobbyPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-  },
-  hobbyPillActive: {
-    backgroundColor: '#111827',
+  avatarOptionSelected: {
+    borderWidth: 2.5,
     borderColor: '#111827',
   },
-  hobbyPillText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  hobbyPillTextActive: { color: '#FFFFFF' },
+  avatarOptionEmoji: { fontSize: 26 },
+  selectedBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FAF8F5',
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    marginTop: 20,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  bioInput: {
+    height: 120,
+    paddingTop: 13,
+  },
+  charCount: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    textAlign: 'right',
+    marginTop: 4,
+  },
 });
