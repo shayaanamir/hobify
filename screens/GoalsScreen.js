@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput, Alert
 } from 'react-native';
-import { Trophy, TrendingUp, Plus, X } from 'lucide-react-native';
+import { Trophy, TrendingUp, Plus, X, CheckCircle2 } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { GoalCard } from '../components';
@@ -52,7 +52,7 @@ const GOAL_TYPES = [
 export default function GoalsScreen() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const goals  = useSelector((state) => state.goals.items);
+  const goals = useSelector((state) => state.goals.items);
   const hobbies = useSelector((state) => state.hobbies.items);
   const goalsStatus = useSelector((state) => state.goals.status);
   const sessions = useSelector(selectAllSessions);
@@ -65,14 +65,19 @@ export default function GoalsScreen() {
     }
   }, [user?.uid, goalsStatus, sessionsStatus, dispatch]);
 
-  const [showForm, setShowForm]       = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formHobbyId, setFormHobbyId] = useState('');
-  const [formType, setFormType]       = useState(GOAL_TYPES[0].type);
-  const [formTarget, setFormTarget]   = useState('');
+  const [formType, setFormType] = useState(GOAL_TYPES[0].type);
+  const [formTarget, setFormTarget] = useState('');
 
-  const totalGoals     = goals.length;
-  const completedGoals = goals.filter((g) => g.current >= g.target).length;
-  const consistency    = totalGoals > 0 ? completedGoals / totalGoals : 0;
+  const totalGoals = goals.length;
+  const goalProgresses = goals.map((g) => Math.min((g.current || 0) / (g.target || 1), 1));
+  const consistency = totalGoals > 0
+    ? goalProgresses.reduce((acc, p) => acc + p, 0) / totalGoals
+    : 0;
+
+  const activeGoals = goals.filter(g => (g.current || 0) < (g.target || 1));
+  const completedGoals = goals.filter(g => (g.current || 0) >= (g.target || 1));
 
   const selectedGoalType = GOAL_TYPES.find((t) => t.type === formType) || GOAL_TYPES[0];
   const canSave = formHobbyId && formTarget && Number(formTarget) > 0;
@@ -101,9 +106,9 @@ export default function GoalsScreen() {
       userId: user.uid,
       goal: {
         hobbyId: formHobbyId,
-        type:    formType,
-        target:  Number(formTarget),
-        unit:    selectedGoalType.unit,
+        type: formType,
+        target: Number(formTarget),
+        unit: selectedGoalType.unit,
         current: initialCurrent,
       },
     }));
@@ -119,13 +124,22 @@ export default function GoalsScreen() {
       'Are you sure you want to remove this goal?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive', 
-          onPress: () => dispatch(removeGoalAsync(goalId)) 
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => dispatch(removeGoalAsync(goalId))
         },
       ]
     );
+  };
+
+  const getConsistencyMessage = (val) => {
+    if (totalGoals === 0) return 'Set some goals to track your progress!';
+    if (val >= 0.9) return 'Absolute legend! Mastering your habits.';
+    if (val >= 0.7) return "You're crushing it this week!";
+    if (val >= 0.4) return 'Making great progress! Keep going.';
+    if (val > 0) return 'Off to a good start! Stay steady.';
+    return 'Ready to start your week strong?';
   };
 
   return (
@@ -148,11 +162,7 @@ export default function GoalsScreen() {
         <View style={styles.consistencyCard}>
           <View style={styles.consistencyLeft}>
             <Text style={styles.consistencyTitle}>Consistency</Text>
-            <Text style={styles.consistencySubtitle}>You're crushing it this week!</Text>
-            <View style={styles.topBadge}>
-              <TrendingUp size={12} color="#4ADE80" />
-              <Text style={styles.topBadgeText}>Top 10%</Text>
-            </View>
+            <Text style={styles.consistencySubtitle}>{getConsistencyMessage(consistency)}</Text>
           </View>
           <ProgressRing progress={consistency} size={96} color="#10B981" trackColor="#374151" />
         </View>
@@ -288,11 +298,11 @@ export default function GoalsScreen() {
 
         {/* ── Active Goals ─────────────────────────────────────────── */}
         <View style={styles.sectionHeader}>
-          <Trophy size={18} color="#EAB308" />
+          <TrendingUp size={18} color="#3B82F6" />
           <Text style={styles.sectionTitle}>Active Goals</Text>
         </View>
 
-        {goals.map((goal) => {
+        {activeGoals.map((goal) => {
           const hobby = hobbies.find((h) => h.id === goal.hobbyId);
           if (!hobby) return null;
           return (
@@ -309,16 +319,39 @@ export default function GoalsScreen() {
           );
         })}
 
-        {goals.length === 0 && !showForm && (
+        {activeGoals.length === 0 && !showForm && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🎯</Text>
-            <Text style={styles.emptyText}>No active goals yet</Text>
-            <TouchableOpacity onPress={() => setShowForm(true)} style={styles.emptyBtn}>
-              <Plus size={14} color="#FFF" />
-              <Text style={styles.emptyBtnText}>Set your first goal</Text>
-            </TouchableOpacity>
+            <Text style={styles.emptyEmoji}>✨</Text>
+            <Text style={styles.emptyText}>All goals completed or none set!</Text>
           </View>
         )}
+
+        {completedGoals.length > 0 && (
+          <>
+            <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+              <CheckCircle2 size={18} color="#10B981" />
+              <Text style={styles.sectionTitle}>Completed Goals</Text>
+            </View>
+
+            {completedGoals.map((goal) => {
+              const hobby = hobbies.find((h) => h.id === goal.hobbyId);
+              if (!hobby) return null;
+              return (
+                <View key={goal.id} style={styles.goalGroupWrapper}>
+                  <View style={[styles.colorBar, { backgroundColor: hobby.color, opacity: 0.5 }]} />
+                  <View style={styles.goalGroupContent}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <IconRenderer iconName={hobby.icon} size={14} color={hobby.color} />
+                      <Text style={styles.hobbyLabel}>{hobby.name}</Text>
+                    </View>
+                    <GoalCard goal={goal} color={hobby.color} />
+                  </View>
+                </View>
+              );
+            })}
+          </>
+        )}
+
       </ScrollView>
     </View>
   );
