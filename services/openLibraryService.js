@@ -37,3 +37,26 @@ export async function searchBooks(query) {
     return [];
   }
 }
+
+export async function getBookDetails(workId) {
+  if (!workId) return null;
+
+  try {
+    const response = await fetch(`${BASE_URL}/works/${workId}.json`);
+    if (!response.ok) throw new Error(`OpenLibrary Details Error: ${response.status}`);
+    const data = await response.json();
+    
+    // Summary can be a string or an object { type: '...', value: '...' }
+    const description = typeof data.description === 'string' 
+      ? data.description 
+      : data.description?.value || '';
+
+    return {
+      ...data,
+      description
+    };
+  } catch (error) {
+    console.error('Error fetching OpenLibrary details:', error);
+    return null;
+  }
+}

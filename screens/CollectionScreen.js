@@ -69,9 +69,9 @@ export default function CollectionScreen({ navigation }) {
     return Object.values(groups);
   }, [filteredItems, hobbies]);
 
-  const handleItemClick = (title, hobbyId) => {
+  const handleItemClick = (title, hobbyId, mediaId) => {
     dispatch(selectMedia({ title, hobbyId }));
-    navigation.navigate('MediaDetail', { mediaTitle: title, hobbyId });
+    navigation.navigate('MediaDetail', { mediaTitle: title, hobbyId, mediaId });
   };
 
   return (
@@ -114,7 +114,7 @@ export default function CollectionScreen({ navigation }) {
                     <TouchableOpacity 
                       key={`${item.title}-${item.hobbyId}`} 
                       style={styles.gridItem}
-                      onPress={() => handleItemClick(item.title, item.hobbyId)}
+                      onPress={() => handleItemClick(item.title, item.hobbyId, item.id)}
                     >
                       <View style={styles.coverWrapper}>
                         {item.coverUrl ? (

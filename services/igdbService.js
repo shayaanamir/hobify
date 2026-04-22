@@ -50,3 +50,27 @@ export async function searchGames(query) {
     return [];
   }
 }
+
+export async function getGameDetails(gameId) {
+  if (!gameId || !IGDB_CLIENT_ID || !IGDB_ACCESS_TOKEN) return null;
+
+  try {
+    const response = await fetch(`${BASE_URL}/games`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Client-ID': IGDB_CLIENT_ID,
+        'Authorization': `Bearer ${IGDB_ACCESS_TOKEN}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `where id = ${gameId}; fields name, summary, cover.image_id, first_release_date, genres.name, platforms.name, total_rating;`
+    });
+
+    if (!response.ok) throw new Error(`IGDB Details Error: ${response.status}`);
+    const data = await response.json();
+    return data[0] || null;
+  } catch (error) {
+    console.error('Error fetching IGDB details:', error);
+    return null;
+  }
+}
