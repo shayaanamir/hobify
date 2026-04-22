@@ -28,7 +28,7 @@ export function SessionItem({ session, color = '#3B82F6' }) {
       <View style={styles.card}>
         {session.mediaTitle && (
           <View style={styles.mediaRow}>
-            <Text style={styles.mediaTitle}>{session.mediaTitle}</Text>
+            <Text style={styles.mediaTitle} numberOfLines={2} ellipsizeMode="tail">{session.mediaTitle}</Text>
             <View style={styles.ratingRow}>
               {session.rating && (
                 <View style={styles.stars}>
@@ -114,9 +114,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   mediaTitle: {
+    flex: 1,
     fontWeight: '700',
     color: '#111827',
     fontSize: 14,
+    marginRight: 8,
   },
   ratingRow: {
     flexDirection: 'row',

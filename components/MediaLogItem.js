@@ -33,7 +33,7 @@ export function MediaLogItem({
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
           {status && (
             <View style={[
-              styles.statusBadge, 
+              styles.statusBadge,
               { backgroundColor: status === 'completed' ? '#DCFCE7' : '#FEF3C7' }
             ]}>
               <Text style={[

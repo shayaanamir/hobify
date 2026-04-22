@@ -5,6 +5,7 @@ import { ArrowLeft, Play, Calendar, Clock, Award, BookOpen } from 'lucide-react-
 
 import { GoalCard, SessionItem, WeeklyChart, MediaLogItem, IconRenderer } from '../components';
 import { getWeeklyData } from '../utils/statsHelper';
+import { formatDuration } from '../utils/formatDuration';
 
 export default function HobbyDetailScreen({ route, navigation }) {
   const { hobbyId } = route.params || {};
@@ -107,7 +108,7 @@ export default function HobbyDetailScreen({ route, navigation }) {
           <View style={styles.statsCard}>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{hobby.totalHours}</Text>
+                <Text style={styles.statValue}>{formatDuration(hobby.totalHours, 'hours', { numberOnly: true })}</Text>
                 <Text style={styles.statLabel}>Hours</Text>
               </View>
               <View style={styles.statDivider} />
@@ -184,7 +185,6 @@ export default function HobbyDetailScreen({ route, navigation }) {
               </View>
             </View>
             <View style={styles.chartCard}>
-              {/* Using static mock data directly as per UI_REFERENCE */}
               <WeeklyChart data={weeklyData} color={hobby.color} height={100} />
             </View>
           </View>
