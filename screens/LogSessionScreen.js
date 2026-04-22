@@ -36,12 +36,13 @@ export default function LogSessionScreen({ route, navigation }) {
       if (s.hobbyId === hobbyId && s.mediaTitle) {
         // Use mediaId as key, or title if ID is missing
         const key = s.mediaId || s.mediaTitle;
-        if (!itemsMap.has(key)) {
+        const existing = itemsMap.get(key);
+        if (!existing || (!existing.coverUrl && s.mediaCoverUrl)) {
           itemsMap.set(key, {
             id: s.mediaId,
             title: s.mediaTitle,
             coverUrl: s.mediaCoverUrl,
-            tmdbMediaType: s.tmdbMediaType // Keep track of this
+            tmdbMediaType: s.tmdbMediaType
           });
         }
       }

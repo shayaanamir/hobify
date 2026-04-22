@@ -27,6 +27,8 @@ export default function CollectionScreen({ navigation }) {
           rating: session.rating || existing.rating,
           status: session.status === 'completed' ? 'completed' : existing.status,
           coverUrl: session.mediaCoverUrl || existing.coverUrl,
+          mediaId: session.mediaId || existing.mediaId,
+          tmdbMediaType: session.tmdbMediaType || existing.tmdbMediaType,
           sessionCount: existing.sessionCount + 1,
           totalMinutes: existing.totalMinutes + session.duration,
           lastDate: session.date > existing.lastDate ? session.date : existing.lastDate,
@@ -38,6 +40,8 @@ export default function CollectionScreen({ navigation }) {
           rating: session.rating,
           status: session.status,
           coverUrl: session.mediaCoverUrl,
+          mediaId: session.mediaId,
+          tmdbMediaType: session.tmdbMediaType,
           sessionCount: 1,
           totalMinutes: session.duration,
           lastDate: session.date,
@@ -118,7 +122,11 @@ export default function CollectionScreen({ navigation }) {
                     >
                       <View style={styles.coverWrapper}>
                         {item.coverUrl ? (
-                          <Image source={{ uri: item.coverUrl }} style={styles.coverImage} />
+                          <Image 
+                            source={{ uri: item.coverUrl }} 
+                            style={styles.coverImage} 
+                            resizeMode="cover"
+                          />
                         ) : (
                           <View style={styles.placeholderCover}>
                             <Library size={32} color="#9CA3AF" />
@@ -276,6 +284,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#E5E7EB',
   },
   placeholderCover: {
     flex: 1,

@@ -113,12 +113,6 @@ export function PostCard({ post }) {
             </Text>
           </View>
 
-          {post.mediaTitle && (
-            <View style={styles.mediaPill}>
-              <BookOpen size={12} color="#6B7280" />
-              <Text style={styles.mediaPillText}>{post.mediaTitle}</Text>
-            </View>
-          )}
         </View>
       )}
 
@@ -131,6 +125,29 @@ export function PostCard({ post }) {
           <Image source={{ uri: post.image }} style={styles.postImage} />
         </View>
       ) : null}
+
+      {/* Media Preview (if tagged) */}
+      {post.mediaTitle && (
+        <View style={styles.mediaPreviewContainer}>
+          <View style={styles.mediaPreviewCoverWrapper}>
+            {post.mediaCoverUrl ? (
+              <Image 
+                source={{ uri: post.mediaCoverUrl }} 
+                style={styles.mediaPreviewCover} 
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.mediaPreviewPlaceholder}>
+                <BookOpen size={16} color="#9CA3AF" />
+              </View>
+            )}
+          </View>
+          <View style={styles.mediaPreviewInfo}>
+            <Text style={styles.mediaPreviewTitle} numberOfLines={1}>{post.mediaTitle}</Text>
+            <Text style={styles.mediaPreviewSubtitle}>Tagged Media</Text>
+          </View>
+        </View>
+      )}
 
       {/* Footer */}
       <View style={styles.footerRow}>
@@ -251,4 +268,46 @@ const styles = StyleSheet.create({
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actionText: { fontSize: 14, fontWeight: '500', color: '#9CA3AF' },
   actionTextLiked: { color: '#EF4444' },
+  mediaPreviewContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 8,
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  mediaPreviewCoverWrapper: {
+    width: 40,
+    height: 56,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  mediaPreviewCover: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E5E7EB',
+  },
+  mediaPreviewPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mediaPreviewInfo: {
+    flex: 1,
+  },
+  mediaPreviewTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  mediaPreviewSubtitle: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
 });

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Platform, TextInput, KeyboardAvoidingView
+  Platform, TextInput, KeyboardAvoidingView, Image
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { X, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen } from 'lucide-react-native';
+import { X, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen, CheckCircle2 } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { addPostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
@@ -34,13 +34,21 @@ export default function CreatePostScreen({ navigation }) {
 
   const hobbyMediaItems = React.useMemo(() => {
     if (!isMediaHobby) return [];
-    const uniqueTitles = new Set();
+    const itemsMap = new Map();
     sessions.forEach(s => {
       if (s.hobbyId === postHobbyId && s.mediaTitle) {
-        uniqueTitles.add(s.mediaTitle);
+        if (!itemsMap.has(s.mediaTitle)) {
+          itemsMap.set(s.mediaTitle, {
+            title: s.mediaTitle,
+            coverUrl: s.mediaCoverUrl
+          });
+        } else if (s.mediaCoverUrl && !itemsMap.get(s.mediaTitle).coverUrl) {
+          // If we found a cover URL later, update it
+          itemsMap.set(s.mediaTitle, { ...itemsMap.get(s.mediaTitle), coverUrl: s.mediaCoverUrl });
+        }
       }
     });
-    return Array.from(uniqueTitles);
+    return Array.from(itemsMap.values());
   }, [sessions, postHobbyId, isMediaHobby]);
 
   const handlePostSubmit = () => {
@@ -60,7 +68,8 @@ export default function CreatePostScreen({ navigation }) {
         hobbyColor: selectedHobby?.color || null,
         hobbyIcon: selectedHobby?.icon || null,
         hobbyCategory: selectedHobby?.category || null,
-        mediaTitle: isMediaHobby ? taggedMedia : null,
+        mediaTitle: isMediaHobby ? taggedMedia?.title : null,
+        mediaCoverUrl: isMediaHobby ? taggedMedia?.coverUrl : null,
       }
     }));
 
@@ -156,27 +165,43 @@ export default function CreatePostScreen({ navigation }) {
           {isMediaHobby && hobbyMediaItems.length > 0 && (
             <>
               <Text style={styles.inputLabel}>Tag Media</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hobbyRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaRow}>
                 <TouchableOpacity
-                  style={[styles.hobbyPill, taggedMedia === null && styles.hobbyPillActive]}
+                  style={[styles.mediaItem, taggedMedia === null && styles.mediaItemActive]}
                   onPress={() => setTaggedMedia(null)}
                 >
-                  <Text style={[styles.hobbyPillText, taggedMedia === null && styles.hobbyPillTextActive]}>None</Text>
+                  <View style={styles.noneCover}>
+                    <X size={24} color={taggedMedia === null ? '#FFFFFF' : '#9CA3AF'} />
+                  </View>
+                  <Text style={[styles.mediaItemText, taggedMedia === null && styles.mediaItemTextActive]}>None</Text>
                 </TouchableOpacity>
-                {hobbyMediaItems.map(title => (
+                {hobbyMediaItems.map(item => (
                   <TouchableOpacity
-                    key={title}
-                    onPress={() => setTaggedMedia(title)}
+                    key={item.title}
+                    onPress={() => setTaggedMedia(item)}
+                    style={styles.mediaItem}
                   >
-                    <View style={[
-                      styles.hobbyPill,
-                      taggedMedia === title && { backgroundColor: `${selectedHobby.color}15`, borderColor: selectedHobby.color, flexDirection: 'row', alignItems: 'center', gap: 6 }
-                    ]}>
-                      {taggedMedia === title && <BookOpen size={14} color={selectedHobby.color} />}
-                      <Text style={[styles.hobbyPillText, taggedMedia === title && { color: selectedHobby.color, fontWeight: '700' }]}>
-                        {title}
-                      </Text>
+                    <View style={styles.mediaCoverWrapper}>
+                      {item.coverUrl ? (
+                        <Image source={{ uri: item.coverUrl }} style={styles.mediaCover} />
+                      ) : (
+                        <View style={styles.mediaPlaceholder}>
+                          <BookOpen size={20} color="#9CA3AF" />
+                        </View>
+                      )}
+                      
+                      {taggedMedia?.title === item.title && (
+                        <View style={styles.selectionOverlay}>
+                          <CheckCircle2 size={32} color="#FFFFFF" fill={selectedHobby.color} />
+                        </View>
+                      )}
                     </View>
+                    <Text style={[
+                      styles.mediaItemText, 
+                      taggedMedia?.title === item.title && { color: selectedHobby.color, fontWeight: '700' }
+                    ]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -306,4 +331,62 @@ const styles = StyleSheet.create({
   },
   hobbyPillText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
   hobbyPillTextActive: { color: '#FFFFFF' },
+  mediaRow: {
+    gap: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 4,
+  },
+  mediaItem: {
+    width: 100,
+    alignItems: 'center',
+  },
+  mediaCoverWrapper: {
+    width: 100,
+    height: 140,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    overflow: 'hidden',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  mediaCover: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noneCover: {
+    width: 100,
+    height: 140,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  mediaItemActive: {
+    // none selected style
+  },
+  mediaItemText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  mediaItemTextActive: {
+    color: '#111827',
+    fontWeight: '700',
+  },
+  selectionOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

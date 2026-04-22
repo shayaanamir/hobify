@@ -188,14 +188,8 @@ export default function PostDetailScreen({ route, navigation }) {
                 </Text>
               </View>
 
-              {post.mediaTitle && (
-                <View style={styles.mediaTag}>
-                  <BookOpen size={10} color="#6B7280" />
-                  <Text style={styles.mediaTagText}>{post.mediaTitle}</Text>
-                </View>
-              )}
-            </View>
-          )}
+        </View>
+      )}
 
           <Text style={styles.postTitle}>{post.title}</Text>
           <Text style={styles.postContent}>{post.content}</Text>
@@ -204,6 +198,25 @@ export default function PostDetailScreen({ route, navigation }) {
           {post.image && (
             <View style={styles.imageWrapper}>
               <Image source={{ uri: post.image }} style={styles.image} resizeMode="cover" />
+            </View>
+          )}
+
+          {/* Media Preview (if tagged) */}
+          {post.mediaTitle && (
+            <View style={styles.mediaPreviewContainer}>
+              <View style={styles.mediaPreviewCoverWrapper}>
+                {post.mediaCoverUrl ? (
+                  <Image source={{ uri: post.mediaCoverUrl }} style={styles.mediaPreviewCover} />
+                ) : (
+                  <View style={styles.mediaPreviewPlaceholder}>
+                    <BookOpen size={16} color="#9CA3AF" />
+                  </View>
+                )}
+              </View>
+              <View style={styles.mediaPreviewInfo}>
+                <Text style={styles.mediaPreviewTitle} numberOfLines={1}>{post.mediaTitle}</Text>
+                <Text style={styles.mediaPreviewSubtitle}>Tagged Media</Text>
+              </View>
             </View>
           )}
         </>
@@ -393,4 +406,45 @@ const styles = StyleSheet.create({
   errorContainer: { paddingVertical: 20, alignItems: 'center' },
   errorText: { fontSize: 13, color: '#EF4444', textAlign: 'center', marginBottom: 8 },
   retryText: { fontSize: 14, fontWeight: '600', color: '#111827', textDecorationLine: 'underline' },
+  mediaPreviewContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  mediaPreviewCoverWrapper: {
+    width: 40,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  mediaPreviewCover: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaPreviewPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mediaPreviewInfo: {
+    flex: 1,
+  },
+  mediaPreviewTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  mediaPreviewSubtitle: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
 });
