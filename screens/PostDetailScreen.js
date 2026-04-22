@@ -4,7 +4,7 @@ import {
   TouchableOpacity, TextInput, KeyboardAvoidingView, Image,
   ActivityIndicator,
 } from 'react-native';
-import { ArrowLeft, Heart, MessageCircle, Send } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, Send, Trophy, TrendingUp, Target, HelpCircle } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync, incrementCommentCountAsync } from '../slices/postsSlice';
@@ -13,10 +13,10 @@ import { selectUser } from '../slices/authSlice';
 import { CommentItem } from '../components/CommentItem';
 
 const TYPE_CONFIG = {
-  achievement: { label: 'Achievement', emoji: '🏆', bg: '#FEF3C7', text: '#92400E' },
-  progress: { label: 'Progress', emoji: '📈', bg: '#DBEAFE', text: '#1E40AF' },
-  milestone: { label: 'Milestone', emoji: '🎯', bg: '#F3E8FF', text: '#6B21A8' },
-  question: { label: 'Question', emoji: '❓', bg: '#FEE2E2', text: '#991B1B' },
+  achievement: { label: 'Achievement', icon: Trophy, bg: '#FEF3C7', text: '#92400E' },
+  progress: { label: 'Progress', icon: TrendingUp, bg: '#DBEAFE', text: '#1E40AF' },
+  milestone: { label: 'Milestone', icon: Target, bg: '#F3E8FF', text: '#6B21A8' },
+  question: { label: 'Question', icon: HelpCircle, bg: '#FEE2E2', text: '#991B1B' },
 };
 
 function timeAgo(dateStr) {
@@ -103,19 +103,22 @@ export default function PostDetailScreen({ route, navigation }) {
                 <Text style={styles.time}>{timeAgo(post.createdAt)}</Text>
               </View>
               <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
+                <typeConfig.icon size={10} color={typeConfig.text} />
                 <Text style={[styles.typeBadgeText, { color: typeConfig.text }]}>
-                  {typeConfig.emoji} {typeConfig.label}
+                  {typeConfig.label}
                 </Text>
               </View>
             </View>
 
             {/* Hobby tag */}
+            {hobby && (
               <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                 <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
                 <Text style={[styles.hobbyTagText, { color: hobby.color }]}>
                   {hobby.name}
                 </Text>
               </View>
+            )}
 
             <Text style={styles.postTitle}>{post.title}</Text>
             <Text style={styles.postContent}>{post.content}</Text>
@@ -236,6 +239,9 @@ const styles = StyleSheet.create({
   userName: { fontSize: 14, fontWeight: '600', color: '#111827' },
   time: { fontSize: 12, color: '#9CA3AF' },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 9999,

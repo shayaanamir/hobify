@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Heart, MessageCircle } from 'lucide-react-native';
+import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
@@ -8,10 +8,10 @@ import { useNavigation } from '@react-navigation/native';
 import { IconRenderer } from './IconRenderer';
 
 const TYPE_CONFIG = {
-  achievement: { label: 'Achievement', emoji: '🏆', bg: '#FEF3C7', text: '#92400E' },
-  progress: { label: 'Progress', emoji: '📈', bg: '#DBEAFE', text: '#1E40AF' },
-  milestone: { label: 'Milestone', emoji: '🎯', bg: '#F3E8FF', text: '#6B21A8' },
-  question: { label: 'Question', emoji: '❓', bg: '#FEE2E2', text: '#991B1B' },
+  achievement: { label: 'Achievement', icon: Trophy, bg: '#FEF3C7', text: '#92400E' },
+  progress: { label: 'Progress', icon: TrendingUp, bg: '#DBEAFE', text: '#1E40AF' },
+  milestone: { label: 'Milestone', icon: Target, bg: '#F3E8FF', text: '#6B21A8' },
+  question: { label: 'Question', icon: HelpCircle, bg: '#FEE2E2', text: '#991B1B' },
 };
 
 function timeAgo(dateStr) {
@@ -29,7 +29,7 @@ export function PostCard({ post }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const hobbies = useSelector(state => state.hobbies.items);
-  
+
   const hobby = post.hobbyId ? hobbies.find(h => h.id === post.hobbyId) : null;
   const typeConfig = TYPE_CONFIG[post.type] || TYPE_CONFIG.progress;
   const isLikedByMe = post.likedBy?.includes(user?.uid) || false;
@@ -53,8 +53,9 @@ export function PostCard({ post }) {
           <Text style={styles.timeAgo}>{timeAgo(post.createdAt)}</Text>
         </View>
         <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
+          <typeConfig.icon size={10} color={typeConfig.text} />
           <Text style={[styles.typeBadgeText, { color: typeConfig.text }]}>
-            {typeConfig.emoji} {typeConfig.label}
+            {typeConfig.label}
           </Text>
         </View>
       </View>
@@ -132,6 +133,9 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 9999,

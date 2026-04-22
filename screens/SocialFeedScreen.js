@@ -1,16 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput, RefreshControl } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { BookOpen, Plus, X } from 'lucide-react-native';
+import { BookOpen, SquarePen } from 'lucide-react-native';
 import { PostCard } from '../components';
 import { fetchPosts, selectPostsStatus } from '../slices/postsSlice';
 
-const POST_TYPES = [
-  { id: 'progress', label: 'Progress', emoji: '📈' },
-  { id: 'achievement', label: 'Achievement', emoji: '🏆' },
-  { id: 'milestone', label: 'Milestone', emoji: '🎯' },
-  { id: 'question', label: 'Question', emoji: '❓' },
-];
 
 export default function SocialFeedScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -70,7 +64,7 @@ export default function SocialFeedScreen({ navigation }) {
         onPress={() => navigation.navigate('CreatePost')}
         activeOpacity={0.8}
       >
-        <Plus size={24} color="#FFFFFF" />
+        <SquarePen size={24} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
