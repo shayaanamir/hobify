@@ -75,8 +75,8 @@ export default function GoalsScreen() {
 
   const enrichedGoals = goals.map(goal => {
     const hobby = hobbies.find(h => h.id === goal.hobbyId);
-    const weekSessions = sessions.filter(s => 
-      s.hobbyId === goal.hobbyId && 
+    const weekSessions = sessions.filter(s =>
+      s.hobbyId === goal.hobbyId &&
       new Date(s.date) >= startOfWeek
     );
 
@@ -345,8 +345,7 @@ export default function GoalsScreen() {
 
         {activeGoals.length === 0 && !showForm && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>✨</Text>
-            <Text style={styles.emptyText}>All goals completed or none set!</Text>
+            <Text style={styles.emptyText}>No active goals! Set one to get started</Text>
           </View>
         )}
 

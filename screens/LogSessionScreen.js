@@ -311,7 +311,17 @@ export default function LogSessionScreen({ route, navigation }) {
             >
               <Text style={styles.durationButtonText}>-</Text>
             </TouchableOpacity>
-            <Text style={styles.durationText}>{duration}</Text>
+            <TextInput
+              style={styles.durationInput}
+              value={String(duration)}
+              onChangeText={(text) => {
+                const cleanText = text.replace(/[^0-9]/g, '');
+                setDuration(cleanText === '' ? 0 : parseInt(cleanText));
+              }}
+              keyboardType="number-pad"
+              maxLength={4}
+              selectTextOnFocus
+            />
             <TouchableOpacity
               onPress={() => setDuration(duration + 5)}
               style={styles.durationButton}
@@ -531,12 +541,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#6B7280',
   },
-  durationText: {
+  durationInput: {
     fontSize: 48,
     fontWeight: '700',
     color: '#111827',
-    width: 100,
+    width: 120,
     textAlign: 'center',
+    paddingVertical: 0, // Remove default padding that might skew centering
   },
   footer: {
     padding: 24,
