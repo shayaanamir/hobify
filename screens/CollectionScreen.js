@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, Platform, Image, TouchableOpacity } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { Search, ChevronRight, Library, Star, Clock } from 'lucide-react-native';
 import { IconRenderer } from '../components';
@@ -26,6 +26,7 @@ export default function CollectionScreen({ navigation }) {
           ...existing,
           rating: session.rating || existing.rating,
           status: session.status === 'completed' ? 'completed' : existing.status,
+          coverUrl: session.mediaCoverUrl || existing.coverUrl,
           sessionCount: existing.sessionCount + 1,
           totalMinutes: existing.totalMinutes + session.duration,
           lastDate: session.date > existing.lastDate ? session.date : existing.lastDate,
@@ -36,6 +37,7 @@ export default function CollectionScreen({ navigation }) {
           hobbyId: session.hobbyId,
           rating: session.rating,
           status: session.status,
+          coverUrl: session.mediaCoverUrl,
           sessionCount: 1,
           totalMinutes: session.duration,
           lastDate: session.date,
@@ -107,19 +109,37 @@ export default function CollectionScreen({ navigation }) {
                     </Text>
                   </Text>
                 </View>
-                {group.items.map((item) => (
-                  <View key={`${item.title}-${item.hobbyId}`} style={styles.itemWrapper}>
-                    <MediaLogItem
-                      title={item.title}
-                      rating={item.rating}
-                      status={item.status}
-                      sessionCount={item.sessionCount}
-                      totalMinutes={item.totalMinutes}
-                      color={group.hobby.color}
-                      onClick={() => handleItemClick(item.title, item.hobbyId)}
-                    />
-                  </View>
-                ))}
+                <View style={styles.gridContainer}>
+                  {group.items.map((item) => (
+                    <TouchableOpacity 
+                      key={`${item.title}-${item.hobbyId}`} 
+                      style={styles.gridItem}
+                      onPress={() => handleItemClick(item.title, item.hobbyId)}
+                    >
+                      <View style={styles.coverWrapper}>
+                        {item.coverUrl ? (
+                          <Image source={{ uri: item.coverUrl }} style={styles.coverImage} />
+                        ) : (
+                          <View style={styles.placeholderCover}>
+                            <Library size={32} color="#9CA3AF" />
+                          </View>
+                        )}
+                        {item.status === 'completed' && (
+                          <View style={styles.completedBadge}>
+                            <Star size={10} color="#FFFFFF" fill="#FFFFFF" />
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+                        <View style={styles.ratingRow}>
+                          <Star size={10} color={item.rating ? '#F59E0B' : '#D1D5DB'} fill={item.rating ? '#F59E0B' : 'transparent'} />
+                          <Text style={styles.ratingText}>{item.rating || '—'}</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             ))
           ) : (
@@ -229,5 +249,76 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingLeft: 4,
+  },
+  gridItem: {
+    width: '30%', // Roughly 3 columns
+    marginBottom: 20,
+  },
+  coverWrapper: {
+    width: '100%',
+    aspectRatio: 2/3,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 8,
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderCover: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  completedBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#10B981',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  itemInfo: {
+    paddingHorizontal: 2,
+  },
+  itemTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
+    lineHeight: 16,
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  hobbyPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
   },
 });
