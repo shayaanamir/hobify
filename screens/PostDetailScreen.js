@@ -144,7 +144,14 @@ export default function PostDetailScreen({ route, navigation }) {
         {/* Post content */}
         <>
           {/* Author row */}
-          <View style={styles.authorRow}>
+          <TouchableOpacity
+            style={styles.authorRow}
+            onPress={() => {
+              if (post.userId && post.userId !== user?.uid) {
+                navigation.navigate('UserProfile', { userId: post.userId });
+              }
+            }}
+          >
             {renderPostAvatar()}
             <View style={styles.authorInfo}>
               <Text style={styles.userName}>{post.userName}</Text>
@@ -156,7 +163,7 @@ export default function PostDetailScreen({ route, navigation }) {
                 {typeConfig.label}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Hobby tag */}
           {hobby && (

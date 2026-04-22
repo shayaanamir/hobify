@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
 import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync } from '../slices/postsSlice';
@@ -72,7 +72,7 @@ export function PostCard({ post }) {
   };
 
   return (
-    <TouchableOpacity onPress={handleTap} style={styles.card} activeOpacity={0.9}>
+    <Pressable onPress={handleTap} style={styles.card}>
       {/* Header */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={handleAuthorTap} style={styles.authorTap}>
@@ -128,7 +128,7 @@ export function PostCard({ post }) {
           <Text style={styles.actionText}>{post.commentCount}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
