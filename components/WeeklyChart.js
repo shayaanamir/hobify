@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   tooltipText: {
-    fontSize: 8,
+    fontSize: 6.5,
     fontWeight: '700',
     color: '#FFFFFF',
   },
