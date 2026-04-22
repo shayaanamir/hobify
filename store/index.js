@@ -7,6 +7,7 @@ import commentsReducer from '../slices/commentsSlice';
 import guidesReducer from '../slices/guidesSlice';
 import plannedActivitiesReducer from '../slices/plannedActivitiesSlice';
 import authReducer from '../slices/authSlice';
+import followsReducer from '../slices/followsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     comments: commentsReducer,
     guides: guidesReducer,
     plannedActivities: plannedActivitiesReducer,
+    follows: followsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

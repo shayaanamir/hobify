@@ -4,6 +4,7 @@ import {
   signIn,
   signOutUser,
   getUserProfile,
+  updateUserProfile,
 } from '../services/authService';
 
 // ─────────────────────────── ASYNC THUNKS ─────────────────────────────────────
@@ -51,13 +52,24 @@ export const restoreSession = createAsyncThunk(
     try {
       const profile = await getUserProfile(firebaseUser.uid);
       if (profile) return profile;
-      // Fallback profile if Firestore doc doesn't exist (e.g. Google first-time)
       return {
         uid: firebaseUser.uid,
         name: firebaseUser.displayName || 'User',
         email: firebaseUser.email,
         avatar: '😊',
       };
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+/** Update profile fields (name, bio, avatarUrl) */
+export const updateProfileAsync = createAsyncThunk(
+  'auth/updateProfileAsync',
+  async ({ uid, updates }, { rejectWithValue }) => {
+    try {
+      return await updateUserProfile(uid, updates);
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -143,6 +155,12 @@ const authSlice = createSlice({
         state.isLoggedIn = false;
         state.user = null;
         state.isRestoringSession = false;
+      });
+
+    // ── Update Profile ────────────────────────
+    builder
+      .addCase(updateProfileAsync.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
       });
   },
 });

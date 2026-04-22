@@ -29,15 +29,19 @@ export default function CreatePostScreen({ navigation }) {
   const handlePostSubmit = () => {
     if (!postTitle.trim() || !postContent.trim() || !user) return;
 
+    const selectedHobby = hobbies.find(h => h.id === postHobbyId);
+
     dispatch(addPostAsync({
       userId: user.uid,
       userName: user.name,
       userAvatar: user.avatar,
+      userAvatarUrl: user.avatarUrl || null,
       post: {
         title: postTitle.trim(),
         content: postContent.trim(),
         type: postType,
         hobbyId: postHobbyId || null,
+        hobbyCategory: selectedHobby?.category || null,
       }
     }));
 

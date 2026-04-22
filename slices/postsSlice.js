@@ -23,6 +23,41 @@ export const fetchPosts = createAsyncThunk(
   }
 );
 
+/** Fetch posts by a list of user IDs (Following feed). Returns merged into global list. */
+export const fetchPostsByUserIds = createAsyncThunk(
+  'posts/fetchPostsByUserIds',
+  async (userIds, { rejectWithValue }) => {
+    if (!userIds || userIds.length === 0) return [];
+    try {
+      // Firestore 'in' supports up to 30 items
+      const chunks = [];
+      for (let i = 0; i < userIds.length; i += 30) {
+        chunks.push(userIds.slice(i, i + 30));
+      }
+      const results = await Promise.all(
+        chunks.map(chunk =>
+          queryCollection('posts', [{ field: 'userId', op: 'in', value: chunk }], { field: 'createdAt', direction: 'desc' })
+        )
+      );
+      return results.flat().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+/** Fetch posts by a single userId (for User Profile screen) */
+export const fetchPostsByUser = createAsyncThunk(
+  'posts/fetchPostsByUser',
+  async (userId, { rejectWithValue }) => {
+    try {
+      return await queryCollection('posts', [{ field: 'userId', op: '==', value: userId }], { field: 'createdAt', direction: 'desc' });
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 /** Add a new post */
 export const addPostAsync = createAsyncThunk(
   'posts/addPostAsync',
@@ -91,8 +126,11 @@ const postsSlice = createSlice({
   name: 'posts',
   initialState: {
     items: [],
+    followingItems: [],
+    userItems: [],
     selectedPostId: null,
     status: 'idle',
+    followingStatus: 'idle',
     error: null,
   },
   reducers: {
@@ -133,6 +171,16 @@ const postsSlice = createSlice({
       .addCase(incrementCommentCountAsync.fulfilled, (state, action) => {
         const post = state.items.find((p) => p.id === action.payload);
         if (post) post.commentCount += 1;
+      })
+      .addCase(fetchPostsByUserIds.pending, (state) => {
+        state.followingStatus = 'loading';
+      })
+      .addCase(fetchPostsByUserIds.fulfilled, (state, action) => {
+        state.followingStatus = 'succeeded';
+        state.followingItems = action.payload;
+      })
+      .addCase(fetchPostsByUser.fulfilled, (state, action) => {
+        state.userItems = action.payload;
       });
   },
 });
@@ -141,8 +189,10 @@ export const { selectPost } = postsSlice.actions;
 export default postsSlice.reducer;
 
 // ─────────────────────────── SELECTORS ────────────────────────────────────────
-export const selectAllPosts = (state) => state.posts.items;
+export const selectAllPosts       = (state) => state.posts.items;
+export const selectFollowingPosts = (state) => state.posts.followingItems;
+export const selectUserPosts      = (state) => state.posts.userItems;
 export const selectSelectedPostId = (state) => state.posts.selectedPostId;
-export const selectPostById = (id) => (state) =>
+export const selectPostById       = (id) => (state) =>
   state.posts.items.find((p) => p.id === id);
-export const selectPostsStatus = (state) => state.posts.status;
+export const selectPostsStatus    = (state) => state.posts.status;

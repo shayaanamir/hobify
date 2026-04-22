@@ -38,6 +38,13 @@ export function PostCard({ post }) {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
+  const handleAuthorTap = () => {
+    // Don't navigate if this is the current user's own post
+    if (post.userId && post.userId !== user?.uid) {
+      navigation.navigate('UserProfile', { userId: post.userId });
+    }
+  };
+
   const handleLike = () => {
     dispatch(toggleLikePostAsync({ postId: post.id, userId: user?.uid, isCurrentlyLiked: isLikedByMe }));
   };
@@ -45,13 +52,19 @@ export function PostCard({ post }) {
   return (
     <TouchableOpacity onPress={handleTap} style={styles.card} activeOpacity={0.9}>
       <View style={styles.headerRow}>
-        <View style={[styles.avatar, { backgroundColor: hobby ? `${hobby.color}20` : '#F3F4F6' }]}>
-          <Text style={styles.avatarText}>{post.userAvatar}</Text>
-        </View>
-        <View style={styles.headerInfo}>
-          <Text style={styles.userName} numberOfLines={1}>{post.userName}</Text>
-          <Text style={styles.timeAgo}>{timeAgo(post.createdAt)}</Text>
-        </View>
+        <TouchableOpacity onPress={handleAuthorTap} style={styles.authorTap}>
+          {post.userAvatarUrl ? (
+            <Image source={{ uri: post.userAvatarUrl }} style={styles.avatarImg} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: hobby ? `${hobby.color}20` : '#F3F4F6' }]}>
+              <Text style={styles.avatarText}>{post.userAvatar || '😊'}</Text>
+            </View>
+          )}
+          <View style={styles.headerInfo}>
+            <Text style={styles.userName} numberOfLines={1}>{post.userName}</Text>
+            <Text style={styles.timeAgo}>{timeAgo(post.createdAt)}</Text>
+          </View>
+        </TouchableOpacity>
         <View style={[styles.typeBadge, { backgroundColor: typeConfig.bg }]}>
           <typeConfig.icon size={10} color={typeConfig.text} />
           <Text style={[styles.typeBadgeText, { color: typeConfig.text }]}>
@@ -108,6 +121,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  authorTap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  avatarImg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
   },
   avatar: {
     width: 36,

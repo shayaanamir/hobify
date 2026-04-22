@@ -7,8 +7,9 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from '../firebaseConfig';
 
 // ── Email / Password ──────────────────────────────────────────────────────────
 
@@ -62,4 +63,26 @@ export async function getUserProfile(uid) {
  */
 export function subscribeToAuthState(callback) {
   return onAuthStateChanged(auth, callback);
+}
+
+/**
+ * Update a user's Firestore profile fields (name, bio, avatarUrl, etc.).
+ * Merges the updates into the existing user doc.
+ */
+export async function updateUserProfile(uid, updates) {
+  await updateDoc(doc(db, 'users', uid), updates);
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.data();
+}
+
+/**
+ * Upload a local image URI to Firebase Storage under avatars/{uid}.
+ * Returns the public download URL.
+ */
+export async function uploadAvatarImage(uid, localUri) {
+  const response = await fetch(localUri);
+  const blob = await response.blob();
+  const avatarRef = ref(storage, `avatars/${uid}`);
+  await uploadBytes(avatarRef, blob);
+  return await getDownloadURL(avatarRef);
 }
