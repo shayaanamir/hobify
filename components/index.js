@@ -23,3 +23,4 @@ export { MediaLogItem } from './MediaLogItem';
 export { PostCard } from './PostCard';
 export { CommentItem } from './CommentItem';
 export { GuideCard } from './GuideCard';
+export { MediaSearchInput } from './MediaSearchInput';

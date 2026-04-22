@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { X, Check, Clock, Calendar as CalendarIcon, Star, BookOpen, Gamepad2, Clapperboard } from 'lucide-react-native';
-import { IconRenderer } from '../components';
+import { IconRenderer, MediaSearchInput } from '../components';
 import { logSessionAsync } from '../slices/sessionsSlice';
 import { updateHobbyStatsAsync } from '../slices/hobbiesSlice';
 import { selectUser } from '../slices/authSlice';
@@ -21,6 +21,31 @@ export default function LogSessionScreen({ route, navigation }) {
   const goals = useSelector((state) =>
     state.goals.items.filter((g) => g.hobbyId === hobbyId)
   );
+  const sessions = useSelector((state) => state.sessions.items);
+
+  const libraryItems = React.useMemo(() => {
+    const isMedia = hobby?.type === 'media';
+    if (!isMedia) return [];
+    
+    // Sort sessions by date descending to get most recent first
+    const sortedSessions = [...sessions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    const itemsMap = new Map();
+    sortedSessions.forEach(s => {
+      if (s.hobbyId === hobbyId && s.mediaTitle) {
+        // Use mediaId as key, or title if ID is missing
+        const key = s.mediaId || s.mediaTitle;
+        if (!itemsMap.has(key)) {
+          itemsMap.set(key, {
+            id: s.mediaId,
+            title: s.mediaTitle,
+            coverUrl: s.mediaCoverUrl
+          });
+        }
+      }
+    });
+    return Array.from(itemsMap.values());
+  }, [sessions, hobbyId, hobby]);
 
   const [duration, setDuration] = useState(30);
   const [notes, setNotes] = useState('');
@@ -28,6 +53,8 @@ export default function LogSessionScreen({ route, navigation }) {
 
   // Media specific state
   const [mediaTitle, setMediaTitle] = useState('');
+  const [mediaCoverUrl, setMediaCoverUrl] = useState(null);
+  const [mediaId, setMediaId] = useState(null);
   const [rating, setRating] = useState(undefined);
   const [status, setStatus] = useState('in-progress');
 
@@ -45,7 +72,11 @@ export default function LogSessionScreen({ route, navigation }) {
     };
     if (notes.trim()) sessionData.notes = notes.trim();
     if (isMediaHobby) {
-      if (mediaTitle.trim()) sessionData.mediaTitle = mediaTitle.trim();
+      if (mediaTitle.trim()) {
+        sessionData.mediaTitle = mediaTitle.trim();
+        if (mediaCoverUrl) sessionData.mediaCoverUrl = mediaCoverUrl;
+        if (mediaId) sessionData.mediaId = mediaId;
+      }
       if (rating !== undefined) sessionData.rating = rating;
       if (status) sessionData.status = status;
     }
@@ -63,6 +94,13 @@ export default function LogSessionScreen({ route, navigation }) {
     if (hobby.name.toLowerCase().includes('gaming')) return 'Game Title';
     if (hobby.name.toLowerCase().includes('movie')) return 'Movie Title';
     return 'Title';
+  };
+
+  const getSearchType = () => {
+    if (hobby.name.toLowerCase().includes('reading') || hobby.name.toLowerCase().includes('book')) return 'book';
+    if (hobby.name.toLowerCase().includes('gaming') || hobby.name.toLowerCase().includes('game')) return 'game';
+    if (hobby.name.toLowerCase().includes('movie') || hobby.name.toLowerCase().includes('show') || hobby.name.toLowerCase().includes('tv')) return 'movie';
+    return 'book'; // Default
   };
 
   const getMediaPlaceholder = () => {
@@ -109,13 +147,70 @@ export default function LogSessionScreen({ route, navigation }) {
               {getMediaIcon()}
               <Text style={styles.label}>{getMediaLabel()}</Text>
             </View>
-            <TextInput
-              style={styles.textInput}
+            <MediaSearchInput
               value={mediaTitle}
-              onChangeText={setMediaTitle}
+              onChangeText={(text) => {
+                setMediaTitle(text);
+                setMediaCoverUrl(null);
+                setMediaId(null);
+              }}
+              onSelectMedia={(media) => {
+                if (media) {
+                  setMediaTitle(media.title);
+                  setMediaCoverUrl(media.coverUrl);
+                  setMediaId(media.id);
+                } else {
+                  setMediaCoverUrl(null);
+                  setMediaId(null);
+                }
+              }}
+              searchType={getSearchType()}
               placeholder={getMediaPlaceholder()}
-              placeholderTextColor="#9CA3AF"
+              icon={null} // Don't pass icon so it uses default Search icon
             />
+
+            {/* Library / Quick Select */}
+            {libraryItems.length > 0 && (
+              <View style={styles.libraryContainer}>
+                <Text style={styles.libraryTitle}>FROM YOUR LIBRARY</Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false} 
+                  contentContainerStyle={styles.libraryScroll}
+                >
+                  {libraryItems.map((item, index) => (
+                    <TouchableOpacity 
+                      key={item.id || index} 
+                      style={[
+                        styles.libraryItem,
+                        mediaId === item.id && mediaTitle === item.title && styles.libraryItemActive
+                      ]}
+                      onPress={() => {
+                        setMediaTitle(item.title);
+                        setMediaCoverUrl(item.coverUrl);
+                        setMediaId(item.id);
+                      }}
+                    >
+                      <View style={styles.libraryCoverWrapper}>
+                        {item.coverUrl ? (
+                          <Image source={{ uri: item.coverUrl }} style={styles.libraryCover} />
+                        ) : (
+                          <View style={styles.libraryPlaceholder}>
+                            <Star size={16} color="#9CA3AF" />
+                          </View>
+                        )}
+                        {mediaId === item.id && mediaTitle === item.title && (
+                          <View style={styles.activeCheck}>
+                            <Check size={12} color="#FFFFFF" strokeWidth={4} />
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.libraryItemTitle} numberOfLines={1}>{item.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             <View style={styles.mediaRow}>
               <View style={styles.mediaCol}>
@@ -425,5 +520,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  libraryContainer: {
+    marginTop: 20,
+  },
+  libraryTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  libraryScroll: {
+    paddingRight: 24,
+    gap: 16,
+  },
+  libraryItem: {
+    width: 80,
+    alignItems: 'center',
+  },
+  libraryItemActive: {
+    opacity: 1,
+  },
+  libraryCoverWrapper: {
+    width: 80,
+    height: 110,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    overflow: 'hidden',
+    marginBottom: 6,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  libraryCover: {
+    width: '100%',
+    height: '100%',
+  },
+  libraryPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  libraryItemTitle: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#4B5563',
+    textAlign: 'center',
+    width: '100%',
+  },
+  activeCheck: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#10B981',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
 });
