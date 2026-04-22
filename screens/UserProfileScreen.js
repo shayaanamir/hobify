@@ -4,16 +4,58 @@ import {
   TouchableOpacity, Image, Platform, ActivityIndicator,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { ArrowLeft, UserCheck, UserPlus } from 'lucide-react-native';
+import { fetchPostsByUser, selectUserPosts } from '../slices/postsSlice';
+import { PostCard, IconRenderer } from '../components';
+import { queryCollection } from '../services/firestoreService';
+import { Clock, Trophy, Flame, BookOpen, ArrowLeft, UserCheck, UserPlus } from 'lucide-react-native';
 import { getUserProfile } from '../services/authService';
 import { selectUser } from '../slices/authSlice';
 import {
-  fetchFollowing, fetchFollowers,
+  fetchFollowing,
   followUserAsync, unfollowUserAsync,
   selectIsFollowing,
 } from '../slices/followsSlice';
-import { fetchPostsByUser, selectUserPosts } from '../slices/postsSlice';
-import { PostCard } from '../components';
+
+// ─── Stat Card ───────────────────────────────────────────────────────────────
+function StatCard({ icon: Icon, value, label, color }) {
+  return (
+    <View style={styles.statCard}>
+      <Icon size={20} color={color} style={{ marginBottom: 8 }} />
+      <Text style={styles.statCardValue}>{value}</Text>
+      <Text style={styles.statCardLabel}>{label}</Text>
+    </View>
+  );
+}
+
+// ─── Profile Hobby Card ────────────────────────────────────────────────────────
+function ProfileHobbyCard({ hobby, sessions }) {
+  const totalMinutes = sessions
+    .filter(s => s.hobbyId === hobby.id)
+    .reduce((sum, s) => sum + s.duration, 0);
+  const hours = Math.round(totalMinutes / 60);
+
+  return (
+    <View style={styles.profileHobbyCard}>
+      <View style={[styles.hobbyIconBox, { backgroundColor: `${hobby.color}10` }]}>
+        <IconRenderer iconName={hobby.icon} size={22} color={hobby.color} />
+      </View>
+      <View style={styles.hobbyInfo}>
+        <Text style={styles.profileHobbyName}>{hobby.name}</Text>
+        <Text style={styles.profileHobbyStats}>
+          <Text style={{ color: '#9CA3AF' }}>{hours}h logged</Text>
+          {hobby.streak > 0 && (
+            <>
+              <Text style={{ color: '#9CA3AF' }}>  •  </Text>
+              <Flame size={12} color="#F97066" />
+              <Text style={{ color: '#F97066' }}> {hobby.streak} day streak</Text>
+            </>
+          )}
+        </Text>
+      </View>
+      <View style={[styles.hobbyAccentBar, { backgroundColor: hobby.color }]} />
+    </View>
+  );
+}
 
 // ─── Initials Avatar ──────────────────────────────────────────────────────────
 function InitialsAvatar({ name, size = 88 }) {
@@ -40,6 +82,9 @@ export default function UserProfileScreen({ route, navigation }) {
   const userPosts = useSelector(selectUserPosts);
 
   const [profile, setProfile] = useState(null);
+  const [userHobbies, setUserHobbies] = useState([]);
+  const [userSessions, setUserSessions] = useState([]);
+  const [guidesCount, setGuidesCount] = useState(0);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -50,12 +95,18 @@ export default function UserProfileScreen({ route, navigation }) {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [p] = await Promise.all([
+      const [p, h, s, g] = await Promise.all([
         getUserProfile(userId),
+        queryCollection('hobbies', [{ field: 'userId', op: '==', value: userId }]),
+        queryCollection('sessions', [{ field: 'userId', op: '==', value: userId }]),
+        queryCollection('guides', [{ field: 'authorId', op: '==', value: userId }]),
         dispatch(fetchPostsByUser(userId)),
         dispatch(fetchFollowing(currentUser.uid)),
       ]);
       setProfile(p);
+      setUserHobbies(h);
+      setUserSessions(s);
+      setGuidesCount(g.length);
 
       // Fetch follower/following counts for this profile user
       const { db } = await import('../firebaseConfig');
@@ -125,8 +176,8 @@ export default function UserProfileScreen({ route, navigation }) {
             <Text style={styles.bio}>{profile.bio}</Text>
           ) : null}
 
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
+          {/* Social Stats Row */}
+          <View style={styles.socialStatsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{userPosts.length}</Text>
               <Text style={styles.statLabel}>Posts</Text>
@@ -141,6 +192,34 @@ export default function UserProfileScreen({ route, navigation }) {
               <Text style={styles.statValue}>{followingCount}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
+          </View>
+
+          {/* Stats Grid */}
+          <View style={styles.statGrid}>
+            <StatCard
+              icon={Clock}
+              value={Math.round(userSessions.reduce((sum, s) => sum + s.duration, 0) / 60)}
+              label="HOURS"
+              color="#3B82F6"
+            />
+            <StatCard
+              icon={Trophy}
+              value={userSessions.length}
+              label="SESSIONS"
+              color="#A78BFA"
+            />
+            <StatCard
+              icon={Flame}
+              value={Math.max(0, ...userHobbies.map(h => h.streak || 0))}
+              label="BEST STREAK"
+              color="#F97066"
+            />
+            <StatCard
+              icon={BookOpen}
+              value={guidesCount}
+              label="GUIDES"
+              color="#2DD4BF"
+            />
           </View>
 
           {/* Follow Button */}
@@ -169,6 +248,22 @@ export default function UserProfileScreen({ route, navigation }) {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Hobbies Section */}
+        {userHobbies.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Hobbies</Text>
+            <View style={styles.hobbiesList}>
+              {userHobbies.map((hobby) => (
+                <ProfileHobbyCard
+                  key={hobby.id}
+                  hobby={hobby}
+                  sessions={userSessions}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Posts */}
         <View style={styles.postsSection}>
@@ -248,26 +343,50 @@ const styles = StyleSheet.create({
   name: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 4 },
   bio: {
     fontSize: 14, color: '#6B7280',
-    textAlign: 'center', lineHeight: 20, marginBottom: 16,
+    textAlign: 'center', lineHeight: 20, marginBottom: 20,
   },
 
-  statsRow: {
+  socialStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    paddingTop: 16,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
     width: '100%',
     justifyContent: 'center',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 20, fontWeight: '700', color: '#111827' },
+  statValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
   statLabel: {
     fontSize: 11, color: '#9CA3AF', fontWeight: '600',
     marginTop: 2, textTransform: 'uppercase',
   },
-  statDivider: { width: 1, height: 32, backgroundColor: '#F3F4F6' },
+  statDivider: { width: 1, height: 24, backgroundColor: '#F3F4F6' },
+
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 20,
+    width: '100%',
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statCardValue: { fontSize: 24, fontWeight: '800', color: '#111827' },
+  statCardLabel: { fontSize: 10, fontWeight: '700', color: '#9CA3AF', marginTop: 4 },
 
   followBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -275,6 +394,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 9999,
     minWidth: 120, justifyContent: 'center',
+    marginTop: 24,
   },
   followingBtn: {
     backgroundColor: '#F3F4F6',
@@ -283,8 +403,44 @@ const styles = StyleSheet.create({
   followBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   followingBtnText: { color: '#111827' },
 
+  section: { marginBottom: 32 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#111827', marginBottom: 16, paddingHorizontal: 20 },
+  hobbiesList: { paddingHorizontal: 20, gap: 12 },
+  profileHobbyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  hobbyIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  hobbyInfo: { flex: 1 },
+  profileHobbyName: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  profileHobbyStats: { fontSize: 13, fontWeight: '500', flexDirection: 'row', alignItems: 'center' },
+  hobbyAccentBar: {
+    position: 'absolute',
+    right: 0,
+    top: 16,
+    bottom: 16,
+    width: 4,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+  },
+
   postsSection: { paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
   emptyState: { alignItems: 'center', paddingVertical: 32 },
   emptyText: { fontSize: 14, color: '#9CA3AF' },
 });
