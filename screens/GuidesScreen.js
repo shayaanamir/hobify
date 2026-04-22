@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput,
 } from 'react-native';
-import { ArrowLeft, Search } from 'lucide-react-native';
+import { ArrowLeft, Search, SquarePen } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectGuide, fetchGuides, selectGuidesStatus } from '../slices/guidesSlice';
 import { GuideCard } from '../components/GuideCard';
@@ -40,6 +40,9 @@ export default function GuidesScreen({ navigation }) {
             <ArrowLeft size={22} color="#6B7280" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Community Guides</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('CreateGuide')} style={styles.writeBtn}>
+            <SquarePen size={22} color="#6B7280" />
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
@@ -85,7 +88,8 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 20,
   },
-  backBtn: { padding: 2 },
+  backBtn: { padding: 4 },
+  writeBtn: { padding: 4 },
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',

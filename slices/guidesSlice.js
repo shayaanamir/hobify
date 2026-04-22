@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { queryCollection, getDocument } from '../services/firestoreService';
+import { queryCollection, getDocument, addDocument } from '../services/firestoreService';
 import { arrayUnion, arrayRemove, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -13,6 +13,28 @@ export const fetchGuides = createAsyncThunk(
         field: 'createdAt',
         direction: 'desc',
       });
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const createGuideAsync = createAsyncThunk(
+  'guides/createGuideAsync',
+  async ({ userId, userName, userAvatar, userAvatarUrl, guideData }, { rejectWithValue }) => {
+    try {
+      const data = {
+        userId,
+        userName,
+        userAvatar,
+        userAvatarUrl: userAvatarUrl || null,
+        ...guideData,
+        likes: 0,
+        likedBy: [],
+        createdAt: new Date().toISOString(),
+      };
+      const id = await addDocument('guides', data);
+      return { id, ...data };
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -82,6 +104,9 @@ const guidesSlice = createSlice({
             guide.likes = (guide.likes || 0) + 1;
           }
         }
+      })
+      .addCase(createGuideAsync.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
       });
   },
 });

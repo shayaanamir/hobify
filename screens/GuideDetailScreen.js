@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Image } from 'react-native';
 import { ArrowLeft, Clock, Heart } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
@@ -88,12 +88,20 @@ export default function GuideDetailScreen({ route, navigation }) {
 
         {/* Author & Meta */}
         <View style={styles.metaRow}>
-          <View style={styles.authorRow}>
+          <TouchableOpacity 
+            onPress={() => guide.userId && navigation.navigate('UserProfile', { userId: guide.userId })}
+            style={styles.authorRow}
+            activeOpacity={0.7}
+          >
             <View style={styles.avatar}>
-              <Text style={styles.avatarEmoji}>{guide.authorAvatar}</Text>
+              {guide.userAvatarUrl ? (
+                <Image source={{ uri: guide.userAvatarUrl }} style={styles.avatarImg} />
+              ) : (
+                <Text style={styles.avatarEmoji}>{guide.userAvatar || '👤'}</Text>
+              )}
             </View>
-            <Text style={styles.authorName}>{guide.authorName}</Text>
-          </View>
+            <Text style={styles.authorName}>{guide.userName}</Text>
+          </TouchableOpacity>
           <View style={styles.metaStat}>
             <Clock size={14} color="#9CA3AF" />
             <Text style={styles.metaStatText}>{guide.readTime} min read</Text>
@@ -170,6 +178,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
   },
   avatarEmoji: { fontSize: 14 },
   authorName: { fontSize: 14, fontWeight: '500', color: '#374151' },

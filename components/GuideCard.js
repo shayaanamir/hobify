@@ -1,17 +1,39 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Clock, Heart } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../slices/authSlice';
 
 export function GuideCard({ guide, onPress }) {
+  const navigation = useNavigation();
+  const currentUser = useSelector(selectUser);
+
+  const handleAuthorTap = (e) => {
+    // If we are already on a profile or it's our own, optional check:
+    // For simplicity, just navigate if it's not us or always navigate
+    if (guide.userId) {
+      navigation.navigate('UserProfile', { userId: guide.userId });
+    }
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.header}>
-        <View style={styles.authorRow}>
+        <TouchableOpacity 
+          onPress={handleAuthorTap} 
+          style={styles.authorRow}
+          activeOpacity={0.7}
+        >
           <View style={styles.avatar}>
-            <Text style={styles.avatarEmoji}>{guide.authorAvatar}</Text>
+            {guide.userAvatarUrl ? (
+              <Image source={{ uri: guide.userAvatarUrl }} style={styles.avatarImg} />
+            ) : (
+              <Text style={styles.avatarEmoji}>{guide.userAvatar || '👤'}</Text>
+            )}
           </View>
-          <Text style={styles.authorName}>{guide.authorName}</Text>
-        </View>
+          <Text style={styles.authorName}>{guide.userName}</Text>
+        </TouchableOpacity>
         <View style={styles.metaRow}>
           <Clock size={12} color="#9CA3AF" />
           <Text style={styles.metaText}>{guide.readTime} min</Text>
@@ -54,6 +76,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
   },
   avatarEmoji: { fontSize: 13 },
   authorName: {
