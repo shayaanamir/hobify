@@ -26,6 +26,8 @@ export const HOBBY_ICONS = [
   { name: 'Sports', icon: 'Dumbbell' },
   { name: 'Coffee', icon: 'Coffee' },
   { name: 'Star', icon: 'Star' },
+  { name: 'BookOpen', icon: 'BookOpen' },
+  { name: 'Clapperboard', icon: 'Clapperboard' },
 ];
 
 /**
