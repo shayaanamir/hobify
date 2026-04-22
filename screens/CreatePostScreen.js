@@ -4,32 +4,47 @@ import {
   Platform, TextInput, KeyboardAvoidingView
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { X } from 'lucide-react-native';
+import { X, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { addPostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
 
 const POST_TYPES = [
-  { id: 'progress', label: 'Progress', emoji: '📈' },
-  { id: 'achievement', label: 'Achievement', emoji: '🏆' },
-  { id: 'milestone', label: 'Milestone', emoji: '🎯' },
-  { id: 'question', label: 'Question', emoji: '❓' },
+  { id: 'progress', label: 'Progress', icon: TrendingUp, color: '#1E40AF' },
+  { id: 'achievement', label: 'Achievement', icon: Trophy, color: '#92400E' },
+  { id: 'milestone', label: 'Milestone', icon: Target, color: '#6B21A8' },
+  { id: 'discussion', label: 'Discussion', icon: MessageSquare, color: '#059669' },
+  { id: 'question', label: 'Question', icon: HelpCircle, color: '#991B1B' },
 ];
 
 export default function CreatePostScreen({ navigation }) {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const hobbies = useSelector((state) => state.hobbies.items);
+  const sessions = useSelector((state) => state.sessions.items);
 
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
   const [postType, setPostType] = useState(POST_TYPES[0].id);
   const [postHobbyId, setPostHobbyId] = useState('');
+  const [taggedMedia, setTaggedMedia] = useState(null);
+
+  const selectedHobby = hobbies.find(h => h.id === postHobbyId);
+  const isMediaHobby = selectedHobby?.type === 'media';
+
+  const hobbyMediaItems = React.useMemo(() => {
+    if (!isMediaHobby) return [];
+    const uniqueTitles = new Set();
+    sessions.forEach(s => {
+      if (s.hobbyId === postHobbyId && s.mediaTitle) {
+        uniqueTitles.add(s.mediaTitle);
+      }
+    });
+    return Array.from(uniqueTitles);
+  }, [sessions, postHobbyId, isMediaHobby]);
 
   const handlePostSubmit = () => {
     if (!postTitle.trim() || !postContent.trim() || !user) return;
-
-    const selectedHobby = hobbies.find(h => h.id === postHobbyId);
 
     dispatch(addPostAsync({
       userId: user.uid,
@@ -42,6 +57,7 @@ export default function CreatePostScreen({ navigation }) {
         type: postType,
         hobbyId: postHobbyId || null,
         hobbyCategory: selectedHobby?.category || null,
+        mediaTitle: isMediaHobby ? taggedMedia : null,
       }
     }));
 
@@ -88,11 +104,19 @@ export default function CreatePostScreen({ navigation }) {
             {POST_TYPES.map(type => (
               <TouchableOpacity
                 key={type.id}
-                style={[styles.typeSelectorBtn, postType === type.id && styles.typeSelectorBtnActive]}
+                style={[
+                  styles.typeSelectorBtn,
+                  postType === type.id && { borderColor: type.color, backgroundColor: `${type.color}10` }
+                ]}
                 onPress={() => setPostType(type.id)}
               >
-                <Text style={[styles.typeSelectorEmoji, postType === type.id && styles.typeSelectorEmojiActive]}>{type.emoji}</Text>
-                <Text style={[styles.typeSelectorText, postType === type.id && styles.tabTextActive]}>{type.label}</Text>
+                <type.icon size={14} color={postType === type.id ? type.color : '#9CA3AF'} />
+                <Text style={[
+                  styles.typeSelectorText,
+                  postType === type.id && { color: type.color, fontWeight: '700' }
+                ]}>
+                  {type.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -108,7 +132,10 @@ export default function CreatePostScreen({ navigation }) {
             {hobbies.map(hobby => (
               <TouchableOpacity
                 key={hobby.id}
-                onPress={() => setPostHobbyId(hobby.id)}
+                onPress={() => {
+                  setPostHobbyId(hobby.id);
+                  setTaggedMedia(null); // Reset tagged media when hobby changes
+                }}
               >
                 <View style={[
                   styles.hobbyPill,
@@ -122,6 +149,36 @@ export default function CreatePostScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          {isMediaHobby && hobbyMediaItems.length > 0 && (
+            <>
+              <Text style={styles.inputLabel}>Tag Media</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hobbyRow}>
+                <TouchableOpacity
+                  style={[styles.hobbyPill, taggedMedia === null && styles.hobbyPillActive]}
+                  onPress={() => setTaggedMedia(null)}
+                >
+                  <Text style={[styles.hobbyPillText, taggedMedia === null && styles.hobbyPillTextActive]}>None</Text>
+                </TouchableOpacity>
+                {hobbyMediaItems.map(title => (
+                  <TouchableOpacity
+                    key={title}
+                    onPress={() => setTaggedMedia(title)}
+                  >
+                    <View style={[
+                      styles.hobbyPill,
+                      taggedMedia === title && { backgroundColor: `${selectedHobby.color}15`, borderColor: selectedHobby.color, flexDirection: 'row', alignItems: 'center', gap: 6 }
+                    ]}>
+                      {taggedMedia === title && <BookOpen size={14} color={selectedHobby.color} />}
+                      <Text style={[styles.hobbyPillText, taggedMedia === title && { color: selectedHobby.color, fontWeight: '700' }]}>
+                        {title}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          )}
 
           <View style={{ height: 40 }} />
         </ScrollView>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
-import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle } from 'lucide-react-native';
+import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
@@ -11,6 +11,7 @@ const TYPE_CONFIG = {
   achievement: { label: 'Achievement', icon: Trophy, bg: '#FEF3C7', text: '#92400E' },
   progress: { label: 'Progress', icon: TrendingUp, bg: '#DBEAFE', text: '#1E40AF' },
   milestone: { label: 'Milestone', icon: Target, bg: '#F3E8FF', text: '#6B21A8' },
+  discussion: { label: 'Discussion', icon: MessageSquare, bg: '#ECFDF5', text: '#059669' },
   question: { label: 'Question', icon: HelpCircle, bg: '#FEE2E2', text: '#991B1B' },
 };
 
@@ -90,14 +91,23 @@ export function PostCard({ post }) {
         </View>
       </View>
 
-      {/* Hobby pill */}
+      {/* Hobby & Media tags */}
       {hobby && (
-        <View style={[
-          styles.hobbyPill,
-          { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 },
-        ]}>
-          <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
-          <Text style={[styles.hobbyPillText, { color: hobby.color }]}>{hobby.name}</Text>
+        <View style={styles.tagsRow}>
+          <View style={[
+            styles.hobbyPill,
+            { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 },
+          ]}>
+            <IconRenderer iconName={hobby.icon} size={12} color={hobby.color} />
+            <Text style={[styles.hobbyPillText, { color: hobby.color }]}>{hobby.name}</Text>
+          </View>
+
+          {post.mediaTitle && (
+            <View style={styles.mediaPill}>
+              <BookOpen size={12} color="#6B7280" />
+              <Text style={styles.mediaPillText}>{post.mediaTitle}</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -187,6 +197,26 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   typeBadgeText: { fontSize: 10, fontWeight: '600' },
+  mediaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 9999,
+  },
+  mediaPillText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   hobbyPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,

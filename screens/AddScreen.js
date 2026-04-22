@@ -7,7 +7,7 @@ import { selectUser } from '../slices/authSlice';
 import { HOBBY_ICONS, IconRenderer } from '../components';
 
 const COLORS = ['#F97066', '#2DD4BF', '#FBBF24', '#A78BFA', '#34D399', '#60A5FA', '#F472B6', '#FB923C'];
-const CATEGORIES = ['Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Entertainment', 'Other'];
+const CATEGORIES = ['Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Media', 'Other'];
 
 const TYPE_OPTIONS = [
   {

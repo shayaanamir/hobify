@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Platform,
   TouchableOpacity, TextInput, KeyboardAvoidingView, Image,
-  ActivityIndicator,
+  ActivityIndicator
 } from 'react-native';
 import {
   ArrowLeft, Heart, MessageCircle, Send,
-  Trophy, TrendingUp, Target, HelpCircle,
+  Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen
 } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,6 +20,7 @@ const TYPE_CONFIG = {
   achievement: { label: 'Achievement', icon: Trophy, bg: '#FEF3C7', text: '#92400E' },
   progress: { label: 'Progress', icon: TrendingUp, bg: '#DBEAFE', text: '#1E40AF' },
   milestone: { label: 'Milestone', icon: Target, bg: '#F3E8FF', text: '#6B21A8' },
+  discussion: { label: 'Discussion', icon: MessageSquare, bg: '#ECFDF5', text: '#059669' },
   question: { label: 'Question', icon: HelpCircle, bg: '#FEE2E2', text: '#991B1B' },
 };
 
@@ -165,11 +166,20 @@ export default function PostDetailScreen({ route, navigation }) {
             </View>
           </TouchableOpacity>
 
-          {/* Hobby tag */}
+          {/* Hobby & Media tags */}
           {hobby && (
-            <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-              <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
-              <Text style={[styles.hobbyTagText, { color: hobby.color }]}>{hobby.name}</Text>
+            <View style={styles.tagsRow}>
+              <View style={[styles.hobbyTag, { backgroundColor: `${hobby.color}15`, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                <IconRenderer iconName={hobby.icon} size={10} color={hobby.color} />
+                <Text style={[styles.hobbyTagText, { color: hobby.color }]}>{hobby.name}</Text>
+              </View>
+
+              {post.mediaTitle && (
+                <View style={styles.mediaTag}>
+                  <BookOpen size={10} color="#6B7280" />
+                  <Text style={styles.mediaTagText}>{post.mediaTitle}</Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -296,6 +306,26 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: { fontSize: 10, fontWeight: '700' },
 
+  mediaTag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 9999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  mediaTagText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   hobbyTag: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8, paddingVertical: 3,
