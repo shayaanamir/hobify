@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Pressable } from 'react-native';
-import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen } from 'lucide-react-native';
+import { Heart, MessageCircle, Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen, ChevronRight } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleLikePostAsync } from '../slices/postsSlice';
 import { selectUser } from '../slices/authSlice';
@@ -72,6 +72,17 @@ export function PostCard({ post }) {
     }));
   };
 
+  const handleMediaTap = () => {
+    if (post.mediaTitle) {
+      navigation.navigate('MediaDetail', {
+        mediaTitle: post.mediaTitle,
+        hobbyId: post.hobbyId,
+        mediaId: post.mediaId,
+        tmdbMediaType: post.tmdbMediaType
+      });
+    }
+  };
+
   return (
     <Pressable onPress={handleTap} style={styles.card}>
       {/* Header */}
@@ -128,7 +139,11 @@ export function PostCard({ post }) {
 
       {/* Media Preview (if tagged) */}
       {post.mediaTitle && (
-        <View style={styles.mediaPreviewContainer}>
+        <TouchableOpacity 
+          onPress={handleMediaTap} 
+          style={styles.mediaPreviewContainer}
+          activeOpacity={0.7}
+        >
           <View style={styles.mediaPreviewCoverWrapper}>
             {post.mediaCoverUrl ? (
               <Image 
@@ -146,7 +161,8 @@ export function PostCard({ post }) {
             <Text style={styles.mediaPreviewTitle} numberOfLines={1}>{post.mediaTitle}</Text>
             <Text style={styles.mediaPreviewSubtitle}>Tagged Media</Text>
           </View>
-        </View>
+          <ChevronRight size={16} color="#D1D5DB" />
+        </TouchableOpacity>
       )}
 
       {/* Footer */}

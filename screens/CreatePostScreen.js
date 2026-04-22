@@ -40,7 +40,9 @@ export default function CreatePostScreen({ navigation }) {
         if (!itemsMap.has(s.mediaTitle)) {
           itemsMap.set(s.mediaTitle, {
             title: s.mediaTitle,
-            coverUrl: s.mediaCoverUrl
+            coverUrl: s.mediaCoverUrl,
+            id: s.mediaId,
+            tmdbMediaType: s.tmdbMediaType,
           });
         } else if (s.mediaCoverUrl && !itemsMap.get(s.mediaTitle).coverUrl) {
           // If we found a cover URL later, update it
@@ -70,6 +72,8 @@ export default function CreatePostScreen({ navigation }) {
         hobbyCategory: selectedHobby?.category || null,
         mediaTitle: isMediaHobby ? taggedMedia?.title : null,
         mediaCoverUrl: isMediaHobby ? taggedMedia?.coverUrl : null,
+        mediaId: isMediaHobby ? taggedMedia?.id : null,
+        tmdbMediaType: isMediaHobby ? taggedMedia?.tmdbMediaType : null,
       }
     }));
 

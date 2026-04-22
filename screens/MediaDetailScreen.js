@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, 
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Star, Clock, CheckCircle2, Calendar, Layout, User, BookOpen } from 'lucide-react-native';
 import { SessionItem, IconRenderer } from '../components';
-import { getMediaDetails } from '../services/mediaSearchService';
+import { getMediaDetails, searchMedia } from '../services/mediaSearchService';
 
 export default function MediaDetailScreen({ route, navigation }) {
   const { mediaTitle, hobbyId, mediaId } = route.params || {};
@@ -15,21 +15,39 @@ export default function MediaDetailScreen({ route, navigation }) {
   );
 
   const sessions = useSelector((state) => state.sessions.items);
-
-  // Find mediaId from sessions if not in params
-  const resolvedMediaId = mediaId || sessions.find(s => s.mediaTitle === mediaTitle && s.hobbyId === hobbyId)?.mediaId;
-  const tmdbMediaType = sessions.find(s => s.mediaTitle === mediaTitle && s.hobbyId === hobbyId)?.tmdbMediaType;
+  
+  // Try to find tmdbMediaType and mediaId from sessions if not in params
+  const sessionForMedia = sessions.find(s => s.mediaTitle === mediaTitle && s.hobbyId === hobbyId);
+  const resolvedMediaId = mediaId || sessionForMedia?.mediaId;
+  const resolvedTmdbMediaType = route.params?.tmdbMediaType || sessionForMedia?.tmdbMediaType;
 
   useEffect(() => {
     async function fetchDetails() {
-      if (!resolvedMediaId) return;
+      let idToFetch = resolvedMediaId;
       setLoading(true);
       try {
         const searchType = hobby?.name.toLowerCase().includes('game') ? 'game' 
                          : hobby?.name.toLowerCase().includes('book') || hobby?.name.toLowerCase().includes('reading') ? 'book' 
+                         : resolvedMediaId?.startsWith('igdb_') ? 'game'
+                         : resolvedMediaId?.startsWith('ol_') ? 'book'
                          : 'movie';
+
+        // Fallback: If no ID but we have a title, search for it
+        if (!idToFetch && mediaTitle) {
+          const results = await searchMedia(mediaTitle, searchType);
+          if (results && results.length > 0) {
+            // Find exact match or just take first
+            const match = results.find(r => r.title.toLowerCase() === mediaTitle.toLowerCase()) || results[0];
+            idToFetch = match.id;
+          }
+        }
+
+        if (!idToFetch) {
+          setLoading(false);
+          return;
+        }
         
-        const data = await getMediaDetails(resolvedMediaId, searchType, tmdbMediaType);
+        const data = await getMediaDetails(idToFetch, searchType, resolvedTmdbMediaType);
         if (data) {
           setDetails(data);
         }
@@ -40,9 +58,9 @@ export default function MediaDetailScreen({ route, navigation }) {
       }
     }
     fetchDetails();
-  }, [resolvedMediaId, hobby, tmdbMediaType]);
+  }, [resolvedMediaId, hobby, resolvedTmdbMediaType]);
 
-  if (!mediaTitle || !hobby) return null;
+  if (!mediaTitle) return null;
 
   // Filter sessions for this specific media
   const mediaSessions = sessions
@@ -88,7 +106,7 @@ export default function MediaDetailScreen({ route, navigation }) {
           {coverUrl ? (
             <Image source={{ uri: coverUrl }} style={styles.heroImage} blurRadius={Platform.OS === 'ios' ? 20 : 10} />
           ) : (
-            <View style={[styles.heroPlaceholder, { backgroundColor: hobby.color }]} />
+            <View style={[styles.heroPlaceholder, { backgroundColor: hobby?.color || '#111827' }]} />
           )}
           <View style={styles.heroOverlay} />
           
@@ -102,10 +120,10 @@ export default function MediaDetailScreen({ route, navigation }) {
           <View style={styles.topInfoRow}>
             <View style={styles.mainCoverWrapper}>
               {coverUrl ? (
-                <Image source={{ uri: coverUrl }} style={styles.mainCover} />
+                <Image source={{ uri: coverUrl }} style={styles.mainCover} resizeMode="cover" />
               ) : (
-                <View style={[styles.mainCoverPlaceholder, { backgroundColor: `${hobby.color}20` }]}>
-                  <IconRenderer iconName={hobby.icon} size={40} color={hobby.color} />
+                <View style={[styles.mainCoverPlaceholder, { backgroundColor: `${hobby?.color || '#F3F4F6'}20` }]}>
+                  <IconRenderer iconName={hobby?.icon || 'activity'} size={40} color={hobby?.color || '#6B7280'} />
                 </View>
               )}
             </View>
@@ -115,8 +133,8 @@ export default function MediaDetailScreen({ route, navigation }) {
               {subtitle && <Text style={styles.subtitleText}>{subtitle}</Text>}
               
               <View style={styles.badgesWrapper}>
-                <View style={[styles.badge, { backgroundColor: `${hobby.color}15` }]}>
-                  <Text style={[styles.badgeText, { color: hobby.color }]}>{hobby.name}</Text>
+                <View style={[styles.badge, { backgroundColor: `${hobby?.color || '#6B7280'}15` }]}>
+                  <Text style={[styles.badgeText, { color: hobby?.color || '#6B7280' }]}>{hobby?.name || 'Media'}</Text>
                 </View>
                 {releaseYear && (
                   <View style={styles.badge}>
@@ -133,6 +151,7 @@ export default function MediaDetailScreen({ route, navigation }) {
                     fill={rating && star <= rating ? '#FBBF24' : 'transparent'}
                     stroke={rating && star <= rating ? '#FBBF24' : '#D1D5DB'}
                     strokeWidth={2}
+                    style={{ marginRight: 4 }}
                   />
                 ))}
               </View>
@@ -166,7 +185,7 @@ export default function MediaDetailScreen({ route, navigation }) {
               </Text>
             </View>
           ) : loading ? (
-            <ActivityIndicator size="small" color={hobby.color} style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="small" color={hobby?.color || '#111827'} style={{ marginVertical: 20 }} />
           ) : null}
 
           {/* Session History */}
@@ -179,7 +198,7 @@ export default function MediaDetailScreen({ route, navigation }) {
             <View style={styles.historyContainer}>
               {mediaSessions.length > 0 ? (
                 mediaSessions.map((session) => (
-                  <SessionItem key={session.id} session={session} color={hobby.color} />
+                  <SessionItem key={session.id} session={session} color={hobby?.color || '#6B7280'} />
                 ))
               ) : (
                 <Text style={styles.noSessionsText}>No sessions logged yet.</Text>
@@ -241,7 +260,6 @@ const styles = StyleSheet.create({
   },
   topInfoRow: {
     flexDirection: 'row',
-    gap: 20,
     marginBottom: 32,
   },
   mainCoverWrapper: {
@@ -256,6 +274,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     marginTop: -80,
     overflow: 'hidden',
+    marginRight: 20,
   },
   mainCover: {
     width: '100%',
@@ -285,7 +304,6 @@ const styles = StyleSheet.create({
   badgesWrapper: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
     marginBottom: 16,
   },
   badge: {
@@ -293,6 +311,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
+    marginRight: 8,
+    marginBottom: 4,
   },
   badgeText: {
     fontSize: 10,
@@ -302,7 +322,6 @@ const styles = StyleSheet.create({
   },
   ratingRow: {
     flexDirection: 'row',
-    gap: 4,
   },
   statsBar: {
     flexDirection: 'row',

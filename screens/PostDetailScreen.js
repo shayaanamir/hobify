@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import {
   ArrowLeft, Heart, MessageCircle, Send,
-  Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen
+  Trophy, TrendingUp, Target, HelpCircle, MessageSquare, BookOpen, ChevronRight
 } from 'lucide-react-native';
 import { IconRenderer } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
@@ -93,6 +93,17 @@ export default function PostDetailScreen({ route, navigation }) {
     dispatch(addCommentAsync({ postId: post.id, content: newComment.trim(), user }));
     dispatch(incrementCommentCountAsync({ postId: post.id, currentCount: post.commentCount || 0 }));
     setNewComment('');
+  };
+
+  const handleMediaTap = () => {
+    if (post.mediaTitle) {
+      navigation.navigate('MediaDetail', {
+        mediaTitle: post.mediaTitle,
+        hobbyId: post.hobbyId,
+        mediaId: post.mediaId,
+        tmdbMediaType: post.tmdbMediaType
+      });
+    }
   };
 
   // ── Post author avatar ───────────────────────────────────────────────────────
@@ -203,7 +214,11 @@ export default function PostDetailScreen({ route, navigation }) {
 
           {/* Media Preview (if tagged) */}
           {post.mediaTitle && (
-            <View style={styles.mediaPreviewContainer}>
+            <TouchableOpacity 
+              onPress={handleMediaTap} 
+              style={styles.mediaPreviewContainer}
+              activeOpacity={0.7}
+            >
               <View style={styles.mediaPreviewCoverWrapper}>
                 {post.mediaCoverUrl ? (
                   <Image source={{ uri: post.mediaCoverUrl }} style={styles.mediaPreviewCover} />
@@ -217,7 +232,8 @@ export default function PostDetailScreen({ route, navigation }) {
                 <Text style={styles.mediaPreviewTitle} numberOfLines={1}>{post.mediaTitle}</Text>
                 <Text style={styles.mediaPreviewSubtitle}>Tagged Media</Text>
               </View>
-            </View>
+              <ChevronRight size={16} color="#D1D5DB" />
+            </TouchableOpacity>
           )}
         </>
 
