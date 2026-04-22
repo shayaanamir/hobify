@@ -69,7 +69,7 @@ export default function UserProfileScreen({ route, navigation }) {
       setLoading(false);
     };
     load();
-  }, [userId]);
+  }, [userId, currentUser?.uid, dispatch]);
 
   const handleFollow = async () => {
     setFollowLoading(true);

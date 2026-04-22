@@ -51,7 +51,9 @@ export const fetchPostsByUser = createAsyncThunk(
   'posts/fetchPostsByUser',
   async (userId, { rejectWithValue }) => {
     try {
-      return await queryCollection('posts', [{ field: 'userId', op: '==', value: userId }], { field: 'createdAt', direction: 'desc' });
+      // We remove the sort here to avoid requiring a composite index in Firestore.
+      // We will sort manually in the reducer or selector.
+      return await queryCollection('posts', [{ field: 'userId', op: '==', value: userId }]);
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -157,21 +159,32 @@ const postsSlice = createSlice({
       })
       .addCase(toggleLikePostAsync.fulfilled, (state, action) => {
         const { postId, userId, isCurrentlyLiked } = action.payload;
-        const post = state.items.find((p) => p.id === postId);
-        if (post) {
-          if (!post.likedBy) post.likedBy = [];
-          if (isCurrentlyLiked) {
-            post.likedBy = post.likedBy.filter(id => id !== userId);
-            post.likes -= 1;
-          } else {
-            post.likedBy.push(userId);
-            post.likes += 1;
+        const updateInList = (list) => {
+          const post = list.find((p) => p.id === postId);
+          if (post) {
+            if (!post.likedBy) post.likedBy = [];
+            if (isCurrentlyLiked) {
+              post.likedBy = post.likedBy.filter(id => id !== userId);
+              post.likes = Math.max(0, (post.likes || 1) - 1);
+            } else {
+              post.likedBy.push(userId);
+              post.likes = (post.likes || 0) + 1;
+            }
           }
-        }
+        };
+        updateInList(state.items);
+        updateInList(state.followingItems);
+        updateInList(state.userItems);
       })
       .addCase(incrementCommentCountAsync.fulfilled, (state, action) => {
-        const post = state.items.find((p) => p.id === action.payload);
-        if (post) post.commentCount += 1;
+        const postId = action.payload;
+        const updateInList = (list) => {
+          const post = list.find((p) => p.id === postId);
+          if (post) post.commentCount = (post.commentCount || 0) + 1;
+        };
+        updateInList(state.items);
+        updateInList(state.followingItems);
+        updateInList(state.userItems);
       })
       .addCase(fetchPostsByUserIds.pending, (state) => {
         state.followingStatus = 'loading';
@@ -181,7 +194,10 @@ const postsSlice = createSlice({
         state.followingItems = action.payload;
       })
       .addCase(fetchPostsByUser.fulfilled, (state, action) => {
-        state.userItems = action.payload;
+        // Sort manually by date desc
+        state.userItems = action.payload.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       });
   },
 });

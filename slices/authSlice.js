@@ -142,6 +142,7 @@ const authSlice = createSlice({
         state.isLoggedIn = false;
         state.user = null;
         state.status = 'idle';
+        state.isRestoringSession = false;
       });
 
     // ── Restore Session ───────────────────────
