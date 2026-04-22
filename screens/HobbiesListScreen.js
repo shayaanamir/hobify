@@ -3,12 +3,17 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Pressa
 import { useSelector } from 'react-redux';
 import { Search, Plus, ArrowLeft } from 'lucide-react-native';
 import { selectAllHobbies } from '../slices/hobbiesSlice';
+import { selectAllGoals } from '../slices/goalsSlice';
+import { selectAllSessions } from '../slices/sessionsSlice';
+import { getWeeklyGoalProgress } from '../utils/statsHelper';
 import { HobbyCard } from '../components';
 
 const CATEGORIES = ['All', 'Creative', 'Sports', 'Music', 'Learning', 'Cooking', 'Other'];
 
 export default function HobbiesListScreen({ navigation }) {
   const hobbies = useSelector(selectAllHobbies);
+  const goals = useSelector(selectAllGoals);
+  const sessions = useSelector(selectAllSessions);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -90,6 +95,7 @@ export default function HobbiesListScreen({ navigation }) {
             <HobbyCard
               key={hobby.id}
               hobby={hobby}
+              goalProgress={getWeeklyGoalProgress(hobby, goals, sessions)}
               onPress={() => handleHobbyClick(hobby.id)}
             />
           ))

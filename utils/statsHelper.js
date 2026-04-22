@@ -29,3 +29,32 @@ export function getWeeklyData(sessions = []) {
   });
   return days.map((h) => +h.toFixed(2));
 }
+
+/** Weekly goal progress (0–100) for a hobby, based on its goals */
+export function getWeeklyGoalProgress(hobby, goals = [], sessions = []) {
+  const hobbyGoals = goals.filter((g) => g.hobbyId === hobby.id);
+  if (!hobbyGoals.length) return null;
+
+  // Use the first goal as the primary indicator
+  const goal = hobbyGoals[0];
+  if (!goal.target) return null;
+
+  // For session-count / hours goals derive current from this week's sessions
+  const startOfWeek = getStartOfWeek();
+  const weekSessions = sessions.filter(
+    (s) => s.hobbyId === hobby.id && s.date && new Date(s.date) >= startOfWeek
+  );
+
+  let current = 0;
+  if (goal.type === 'sessions_per_week') {
+    current = weekSessions.length;
+  } else if (goal.type === 'weekly_hours') {
+    current = +weekSessions.reduce((a, s) => a + (s.duration || 0) / 60, 0).toFixed(1);
+  } else if (goal.type === 'completed_items_per_week') {
+    current = weekSessions.filter(s => s.status === 'completed').length;
+  } else if (goal.type === 'streak_days') {
+    current = hobby.streak || 0;
+  }
+
+  return Math.min(100, Math.round((current / goal.target) * 100));
+}
