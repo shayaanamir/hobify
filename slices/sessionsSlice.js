@@ -32,6 +32,29 @@ export const fetchGlobalSessions = createAsyncThunk(
   }
 );
 
+/** Fetch sessions by a list of user IDs (Following activity). */
+export const fetchSessionsByUserIds = createAsyncThunk(
+  'sessions/fetchSessionsByUserIds',
+  async (userIds, { rejectWithValue }) => {
+    if (!userIds || userIds.length === 0) return [];
+    try {
+      // Firestore 'in' supports up to 30 items
+      const chunks = [];
+      for (let i = 0; i < userIds.length; i += 30) {
+        chunks.push(userIds.slice(i, i + 30));
+      }
+      const results = await Promise.all(
+        chunks.map(chunk =>
+          queryCollection('sessions', [{ field: 'userId', op: 'in', value: chunk }])
+        )
+      );
+      return results.flat().sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 /** Log a new session to Firestore */
 export const logSessionAsync = createAsyncThunk(
   'sessions/logSessionAsync',
@@ -63,9 +86,11 @@ const sessionsSlice = createSlice({
   initialState: {
     items: [],
     globalItems: [],
+    followingItems: [],
     selectedMediaTitle: null,
     selectedMediaHobbyId: null,
     status: 'idle',
+    followingStatus: 'idle',
     error: null,
   },
   reducers: {
@@ -90,9 +115,17 @@ const sessionsSlice = createSlice({
       .addCase(fetchGlobalSessions.fulfilled, (state, action) => {
         state.globalItems = action.payload;
       })
+      .addCase(fetchSessionsByUserIds.pending, (state) => {
+        state.followingStatus = 'loading';
+      })
+      .addCase(fetchSessionsByUserIds.fulfilled, (state, action) => {
+        state.followingStatus = 'succeeded';
+        state.followingItems = action.payload;
+      })
       .addCase(logSessionAsync.fulfilled, (state, action) => {
         state.items.push(action.payload);
         state.globalItems.unshift(action.payload);
+        // Note: we don't automatically add to followingItems here as it's for OTHER users
       });
   },
 });
@@ -103,6 +136,7 @@ export default sessionsSlice.reducer;
 // ─────────────────────────── SELECTORS ────────────────────────────────────────
 export const selectAllSessions = (state) => state.sessions.items;
 export const selectGlobalSessions = (state) => state.sessions.globalItems;
+export const selectFollowingSessions = (state) => state.sessions.followingItems;
 
 export const selectSessionsByHobbyId = (hobbyId) => (state) =>
   state.sessions.items.filter((s) => s.hobbyId === hobbyId);

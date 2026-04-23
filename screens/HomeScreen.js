@@ -5,10 +5,11 @@ import { Clock, Flame, Trophy, ChevronRight, Library, Calendar, Check, BookOpen 
 
 import { HobbyCard, WeeklyChart, StatCard } from '../components';
 import { selectAllHobbies, selectHobbiesStatus, fetchHobbies } from '../slices/hobbiesSlice';
-import { fetchSessions, selectAllSessions, fetchGlobalSessions, selectGlobalSessions } from '../slices/sessionsSlice';
+import { fetchSessions, selectAllSessions, fetchSessionsByUserIds, selectFollowingSessions } from '../slices/sessionsSlice';
 import { fetchGoals, selectAllGoals, selectGoalsStatus } from '../slices/goalsSlice';
 import { fetchPlannedActivities, selectAllPlannedActivities, toggleCompleteAsync } from '../slices/plannedActivitiesSlice';
 import { selectUser } from '../slices/authSlice';
+import { fetchFollowing, selectFollowing } from '../slices/followsSlice';
 import { getWeeklyData, getStartOfWeek, getWeeklyGoalProgress } from '../utils/statsHelper';
 import { formatDuration } from '../utils/formatDuration';
 import { timeAgo } from '../utils/timeHelper';
@@ -36,8 +37,8 @@ function getGoalsSummary(goals = [], hobbies = [], sessions = []) {
   const total = goals.length;
   const done = goals.filter((goal) => {
     const hobby = hobbies.find((h) => h.id === goal.hobbyId);
-    const weekSessions = sessions.filter((s) => 
-      s.hobbyId === goal.hobbyId && 
+    const weekSessions = sessions.filter((s) =>
+      s.hobbyId === goal.hobbyId &&
       s.date && new Date(s.date) >= startOfWeek
     );
 
@@ -71,7 +72,8 @@ export default function HomeScreen({ navigation }) {
   const goals = useSelector(selectAllGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
   const plannedActivities = useSelector(selectAllPlannedActivities);
-  const globalSessions = useSelector(selectGlobalSessions);
+  const followingSessions = useSelector(selectFollowingSessions);
+  const following = useSelector(selectFollowing);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -83,8 +85,14 @@ export default function HomeScreen({ navigation }) {
       dispatch(fetchGoals(user.uid));
     }
     dispatch(fetchPlannedActivities(user.uid));
-    dispatch(fetchGlobalSessions());
+    dispatch(fetchFollowing(user.uid));
   }, [user?.uid, hobbiesStatus, goalsStatus, dispatch]);
+
+  useEffect(() => {
+    if (user?.uid && following.length > 0) {
+      dispatch(fetchSessionsByUserIds(following));
+    }
+  }, [user?.uid, following, dispatch]);
 
   // ── Derived stats ──────────────────────────────────────────────────────────
   const todayHours = getTodayHours(sessions);
@@ -103,8 +111,7 @@ export default function HomeScreen({ navigation }) {
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
 
-  const recentActivity = globalSessions
-    .filter(s => s.userId !== user?.uid)
+  const recentActivity = followingSessions
     .slice(0, 5);
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -168,33 +175,33 @@ export default function HomeScreen({ navigation }) {
           >
             {recentActivity.map((session) => {
               return (
-                <View 
-                  key={session.id} 
+                <View
+                  key={session.id}
                   style={styles.activityCard}
                 >
-                <Pressable 
-                  style={styles.activityHeader}
-                  onPress={() => session.userId && navigation.navigate('UserProfile', { userId: session.userId })}
-                >
-                  {session.userAvatarUrl ? (
-                    <Image source={{ uri: session.userAvatarUrl }} style={styles.activityAvatar} />
-                  ) : (
-                    <View style={styles.activityAvatarPlaceholder}>
-                      <Text style={styles.activityAvatarText}>👤</Text>
+                  <Pressable
+                    style={styles.activityHeader}
+                    onPress={() => session.userId && navigation.navigate('UserProfile', { userId: session.userId })}
+                  >
+                    {session.userAvatarUrl ? (
+                      <Image source={{ uri: session.userAvatarUrl }} style={styles.activityAvatar} />
+                    ) : (
+                      <View style={styles.activityAvatarPlaceholder}>
+                        <Text style={styles.activityAvatarText}></Text>
+                      </View>
+                    )}
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityUser} numberOfLines={1}>{session.userName || 'A fellow hobbyist'}</Text>
+                      <Text style={styles.activityTime}>{timeAgo(session.createdAt || session.date)}</Text>
                     </View>
-                  )}
-                  <View style={styles.activityInfo}>
-                    <Text style={styles.activityUser} numberOfLines={1}>{session.userName || 'A fellow hobbyist'}</Text>
-                    <Text style={styles.activityTime}>{timeAgo(session.createdAt || session.date)}</Text>
+                  </Pressable>
+
+                  <View style={styles.activityActionRow}>
+                    <IconRenderer iconName={session.hobbyIcon || 'activity'} size={14} color={session.hobbyColor || '#6B7280'} />
+                    <Text style={styles.activityActionText}>
+                      Logged <Text style={styles.boldText}>{formatDuration(session.duration)}</Text> {session.hobbyName ? `of ${session.hobbyName}` : 'in their hobby'}
+                    </Text>
                   </View>
-                </Pressable>
-                
-                <View style={styles.activityActionRow}>
-                  <IconRenderer iconName={session.hobbyIcon || 'activity'} size={14} color={session.hobbyColor || '#6B7280'} />
-                  <Text style={styles.activityActionText}>
-                    Logged <Text style={styles.boldText}>{formatDuration(session.duration)}</Text> {session.hobbyName ? `of ${session.hobbyName}` : 'in their hobby'}
-                  </Text>
-                </View>
 
                   {session.mediaTitle && (
                     <Pressable

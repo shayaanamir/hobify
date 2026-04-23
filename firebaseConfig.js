@@ -1,9 +1,9 @@
 // ─────────────────────────── Firebase Configuration ───────────────────────────
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -18,10 +18,18 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth with AsyncStorage persistence (keeps user logged in across restarts)
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Use AsyncStorage persistence on native, browser localStorage on web
+let auth;
+if (Platform.OS === 'web') {
+  auth = initializeAuth(app, {
+    persistence: browserLocalPersistence,
+  });
+} else {
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+}
 
 // Initialize Firestore
 const db = getFirestore(app);
