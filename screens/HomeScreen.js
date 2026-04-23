@@ -31,9 +31,30 @@ function getTopStreak(hobbies = []) {
 }
 
 /** Completed vs total goals */
-function getGoalsSummary(goals = []) {
+function getGoalsSummary(goals = [], hobbies = [], sessions = []) {
+  const startOfWeek = getStartOfWeek();
   const total = goals.length;
-  const done = goals.filter((g) => (g.current || 0) >= (g.target || 1)).length;
+  const done = goals.filter((goal) => {
+    const hobby = hobbies.find((h) => h.id === goal.hobbyId);
+    const weekSessions = sessions.filter((s) => 
+      s.hobbyId === goal.hobbyId && 
+      s.date && new Date(s.date) >= startOfWeek
+    );
+
+    let current = 0;
+    if (goal.type === 'sessions_per_week') {
+      current = weekSessions.length;
+    } else if (goal.type === 'weekly_hours') {
+      current = +weekSessions.reduce((acc, s) => acc + (s.duration || 0) / 60, 0).toFixed(1);
+    } else if (goal.type === 'completed_items_per_week') {
+      current = weekSessions.filter((s) => s.status === 'completed').length;
+    } else if (goal.type === 'streak_days') {
+      current = hobby?.streak || 0;
+    }
+
+    return current >= (goal.target || 1);
+  }).length;
+
   return { done, total };
 }
 
@@ -68,7 +89,7 @@ export default function HomeScreen({ navigation }) {
   // ── Derived stats ──────────────────────────────────────────────────────────
   const todayHours = getTodayHours(sessions);
   const topStreak = getTopStreak(hobbies);
-  const { done: goalsDone, total: goalsTotal } = getGoalsSummary(goals);
+  const { done: goalsDone, total: goalsTotal } = getGoalsSummary(goals, hobbies, sessions);
   const weeklyData = getWeeklyData(sessions);
   const activeHobbies = hobbies.slice(0, 4);
 
